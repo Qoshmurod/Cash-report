@@ -1,9 +1,10 @@
-import { demoStore } from '../store'
+import { prisma } from '../../utils/prisma'
 
-export default defineEventHandler((event) => {
+export default defineEventHandler(async (event) => {
   const id = Number(getRouterParam(event, 'id'))
-  const index = demoStore.payments.findIndex((item) => item.id === id)
-  if (index < 0) throw createError({ statusCode: 404, statusMessage: 'To‘lov topilmadi' })
-  demoStore.payments.splice(index, 1)
+  if (!Number.isInteger(id)) throw createError({ statusCode: 400, statusMessage: 'Noto‘g‘ri to‘lov ID' })
+  const payment = await prisma.payment.findUnique({ where: { id } })
+  if (!payment) throw createError({ statusCode: 404, statusMessage: 'To‘lov topilmadi' })
+  await prisma.payment.delete({ where: { id } })
   return { ok: true }
 })

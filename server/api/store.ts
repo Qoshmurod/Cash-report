@@ -17,12 +17,3 @@ export type Payment = {
   createdAt: string
   patient: Patient
 }
-
-const patients: Patient[] = []
-const payments: Payment[] = []
-
-export const demoStore = { patients, payments }
-
-export function nextId(items: Array<{ id: number }>) {
-  return items.length ? Math.max(...items.map((item) => item.id)) + 1 : 1
-}

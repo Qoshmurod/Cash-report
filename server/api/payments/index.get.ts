@@ -1,12 +1,20 @@
-import { demoStore } from '../store'
+import { prisma } from '../../utils/prisma'
 
-export default defineEventHandler((event) => {
+export default defineEventHandler(async (event) => {
   const query = getQuery(event)
-  const department = String(query.department || '')
-  const search = String(query.search || '').toLowerCase()
-  const payments = demoStore.payments.filter((payment) =>
-    (!department || payment.department === department) &&
-    (!search || payment.patient.fullName.toLowerCase().includes(search))
-  )
+  const department = String(query.department || '').trim()
+  const search = String(query.search || '').trim()
+  const from = query.from ? new Date(`${query.from}T00:00:00.000Z`) : undefined
+  const to = query.to ? new Date(`${query.to}T23:59:59.999Z`) : undefined
+  const where = {
+    ...(department ? { department } : {}),
+    ...(search ? { patient: { fullName: { contains: search, mode: 'insensitive' as const } } } : {}),
+    ...(from || to ? { createdAt: { ...(from ? { gte: from } : {}), ...(to ? { lte: to } : {}) } } : {})
+  }
+  const payments = await prisma.payment.findMany({
+    where,
+    include: { patient: true },
+    orderBy: { createdAt: 'desc' }
+  })
   return { payments, totalSum: payments.reduce((sum, payment) => sum + payment.amount, 0) }
 })

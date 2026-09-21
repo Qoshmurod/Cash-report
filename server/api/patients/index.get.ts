@@ -1,10 +1,15 @@
-import { demoStore } from '../store'
+import { prisma } from '../../utils/prisma'
 
-export default defineEventHandler((event) => {
+export default defineEventHandler(async (event) => {
   const query = getQuery(event)
-  const search = String(query.search || '').toLowerCase()
-  const patients = demoStore.patients.filter((patient) =>
-    !search || `${patient.fullName} ${patient.phone || ''}`.toLowerCase().includes(search)
-  )
-  return { patients, total: patients.length }
+  const search = String(query.search || '').trim()
+  const page = Math.max(1, Number(query.page) || 1)
+  const where = search
+    ? { OR: [{ fullName: { contains: search, mode: 'insensitive' as const } }, { phone: { contains: search } }] }
+    : undefined
+  const [patients, total] = await Promise.all([
+    prisma.patient.findMany({ where, orderBy: { createdAt: 'desc' }, skip: (page - 1) * 50, take: 50 }),
+    prisma.patient.count({ where })
+  ])
+  return { patients, total }
 })

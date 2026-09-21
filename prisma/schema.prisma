@@ -1,0 +1,39 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model Patient {
+  id        Int       @id @default(autoincrement())
+  fullName  String
+  phone     String?
+  birthYear Int?
+  address   String?
+  note      String?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  payments  Payment[]
+
+  @@index([fullName])
+  @@index([phone])
+}
+
+model Payment {
+  id         Int      @id @default(autoincrement())
+  patientId  Int
+  department String
+  service    String?
+  amount     Int
+  note       String?
+  createdAt  DateTime @default(now())
+  patient    Patient  @relation(fields: [patientId], references: [id], onDelete: Cascade)
+
+  @@index([createdAt])
+  @@index([department])
+  @@index([patientId])
+}
