@@ -1,6 +1,6 @@
 <script setup lang="ts">
-const username = ref('Husanov001')
-const password = ref('Husanov001!99')
+const username = ref('')
+const password = ref('')
 const error = ref('')
 const loading = ref(false)
 const { t, language, languages } = useI18n()
@@ -21,14 +21,14 @@ async function login() {
 
 <template>
   <main class="login-page">
-    <form class="login-card" @submit.prevent="login">
+    <form class="login-card" autocomplete="off" @submit.prevent="login">
       <select v-model="language" class="language-select" aria-label="Language">
         <option v-for="item in languages" :key="item.value" :value="item.value">{{ item.label }}</option>
       </select>
       <h1>🏥 {{ t('clinic') }}</h1>
       <p>{{ t('loginTitle') }}</p>
-      <label>{{ t('username') }}<input v-model="username" autocomplete="username" required /></label>
-      <label>{{ t('password') }}<input v-model="password" type="password" autocomplete="current-password" required /></label>
+      <label>{{ t('username') }}<input v-model="username" autocomplete="off" required /></label>
+      <label>{{ t('password') }}<input v-model="password" type="password" autocomplete="new-password" required /></label>
       <p v-if="error" class="error">{{ error }}</p>
       <button class="btn" :disabled="loading">{{ loading ? t('loading') : t('login') }}</button>
     </form>
