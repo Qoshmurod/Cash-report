@@ -9,54 +9,175 @@ datasource db {
 }
 
 model Patient {
-  id        Int       @id @default(autoincrement())
-  fullName  String
-  phone     String?
-  birthYear Int?
-  address   String?
-  note      String?
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  payments  Payment[]
+  id           Int           @id @default(autoincrement())
+  fullName     String
+  phone        String?
+  birthYear    Int?
+  address      String?
+  note         String?
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  payments     Payment[]
+  queueEntries QueueEntry[]
+  examinations Examination[]
 
   @@index([fullName])
   @@index([phone])
+  @@index([createdAt])
+}
+
+model Doctor {
+  id           Int           @id @default(autoincrement())
+  userId       Int?          @unique
+  fullName     String
+  specialty    String?
+  phone        String?
+  room         String?
+  active       Boolean       @default(true)
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  user         User?         @relation(fields: [userId], references: [id], onDelete: SetNull)
+  payments     Payment[]     @relation("DoctorPayments")
+  queueEntries QueueEntry[]
+  examinations Examination[]
+
+  @@index([fullName])
+  @@index([active])
 }
 
 model Payment {
-  id         Int      @id @default(autoincrement())
-  patientId  Int
-  department String
-  service    String?
-  amount     Int
-  note       String?
-  createdAt  DateTime @default(now())
-  patient    Patient  @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  id            Int           @id @default(autoincrement())
+  patientId     Int
+  doctorId      Int?
+  cashierId     Int?
+  queueId       Int?         @unique
+  department    String
+  service       String?
+  amount        Int
+  paymentMethod PaymentMethod @default(CASH)
+  note          String?
+  createdAt     DateTime      @default(now())
+  patient       Patient       @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  doctor        Doctor?       @relation("DoctorPayments", fields: [doctorId], references: [id], onDelete: SetNull)
+  cashier       User?         @relation("CashierPayments", fields: [cashierId], references: [id], onDelete: SetNull)
+  queue         QueueEntry?   @relation("QueuePayment", fields: [queueId], references: [id], onDelete: SetNull)
 
   @@index([createdAt])
   @@index([department])
   @@index([patientId])
+  @@index([doctorId])
+  @@index([cashierId])
+  @@index([paymentMethod])
+}
+
+model QueueEntry {
+  id          Int         @id @default(autoincrement())
+  queueDay    String
+  queueNumber Int
+  patientId   Int
+  doctorId    Int
+  status      QueueStatus @default(WAITING)
+  priority    Boolean     @default(false)
+  note        String?
+  createdAt   DateTime    @default(now())
+  calledAt    DateTime?
+  completedAt DateTime?
+  patient     Patient     @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  doctor      Doctor      @relation(fields: [doctorId], references: [id], onDelete: Restrict)
+  paymentId   Int?        @unique
+  payment     Payment?    @relation("QueuePayment")
+  examinations Examination[]
+
+  @@unique([queueDay, queueNumber])
+  @@index([queueDay, status])
+  @@index([doctorId, queueDay, status])
+  @@index([patientId, queueDay])
+}
+
+model Examination {
+  id          Int        @id @default(autoincrement())
+  patientId   Int
+  doctorId    Int
+  queueId     Int?
+  complaints  String?
+  diagnosis   String?
+  treatment   String?
+  notes       String?
+  createdAt   DateTime   @default(now())
+  patient     Patient    @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  doctor      Doctor     @relation(fields: [doctorId], references: [id], onDelete: Restrict)
+  queue       QueueEntry? @relation(fields: [queueId], references: [id], onDelete: SetNull)
+
+  @@index([patientId, createdAt])
+  @@index([doctorId, createdAt])
+}
+
+enum QueueStatus {
+  WAITING
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+enum PaymentMethod {
+  CASH
+  CARD
 }
 
 enum UserRole {
   SUPER_ADMIN
   ADMIN
   OPERATOR
+  DOCTOR
+}
+
+enum PermissionCode {
+  QUEUE_VIEW
+  QUEUE_MANAGE
+  PATIENTS_VIEW
+  PATIENTS_MANAGE
+  PATIENT_HISTORY_VIEW
+  PATIENT_HISTORY_MANAGE
+  DOCTORS_VIEW
+  DOCTORS_MANAGE
+  PAYMENTS_VIEW
+  PAYMENTS_CREATE
+  PAYMENTS_DELETE
+  PAID_PATIENTS_VIEW
+  REPORT_DAILY_VIEW
+  REPORT_MONTHLY_VIEW
+  REPORT_YEARLY_VIEW
+  REPORT_EXPORT
+  ADMIN_USERS
+  ADMIN_PERMISSIONS
 }
 
 model User {
-  id                   Int       @id @default(autoincrement())
-  username             String    @unique
+  id                   Int              @id @default(autoincrement())
+  username             String           @unique
   passwordHash         String
   passwordFingerprint  String?
-  role                 UserRole  @default(OPERATOR)
-  mustChangePassword   Boolean   @default(false)
-  disabled             Boolean   @default(false)
-  createdAt            DateTime  @default(now())
-  updatedAt            DateTime  @updatedAt
+  role                 UserRole         @default(OPERATOR)
+  mustChangePassword   Boolean          @default(false)
+  disabled             Boolean          @default(false)
+  permissionsConfigured Boolean         @default(false)
+  createdAt            DateTime         @default(now())
+  updatedAt            DateTime         @updatedAt
   sessions             Session[]
+  permissions          UserPermission[]
+  doctor               Doctor?
+  paymentsCollected    Payment[]        @relation("CashierPayments")
 
   @@index([role])
+  @@index([disabled])
+}
+
+model UserPermission {
+  userId     Int
+  permission PermissionCode
+  user       User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([userId, permission])
 }
 
 model Session {
