@@ -4,6 +4,10 @@ import { requirePermission } from '../../utils/auth'
 export default defineEventHandler(async (event) => {
   await requirePermission(event, 'PAYMENTS_CREATE')
   const body = await readBody(event)
+  const rawServiceIds: number[] = Array.isArray(body?.serviceIds)
+    ? body.serviceIds.map((value: unknown) => Number(value)).filter((id: number) => Number.isInteger(id) && id > 0)
+    : []
+  const serviceIds: number[] = Array.from(new Set<number>(rawServiceIds))
   const patientId = Number(body?.patientId)
   const amount = Number(body?.amount)
   if (!Number.isInteger(patientId) || !Number.isSafeInteger(amount) || amount <= 0) {
@@ -11,17 +15,26 @@ export default defineEventHandler(async (event) => {
   }
   const patient = await prisma.patient.findUnique({ where: { id: patientId } })
   if (!patient) throw createError({ statusCode: 404, statusMessage: 'Bemor topilmadi' })
+  const selectedServices = serviceIds.length
+    ? await prisma.service.findMany({ where: { id: { in: serviceIds }, active: true }, select: { id: true, department: true, name: true } })
+    : []
+  if (serviceIds.length !== selectedServices.length) {
+    throw createError({ statusCode: 400, statusMessage: 'Tanlangan xizmatlardan biri topilmadi' })
+  }
+  const departments = [...new Set(selectedServices.map((service) => service.department).filter(Boolean))]
+  const department = departments.length === 1 ? departments[0]! : String(body.department || 'PARAZITOLOGIYA')
   const payment = await prisma.payment.create({
     data: {
       patientId,
-      department: String(body.department || 'PARAZITOLOGIYA'),
+      department,
       service: body.service ? String(body.service) : null,
       amount,
       method: ['CASH', 'CARD', 'TRANSFER'].includes(String(body.method)) ? String(body.method) as any : 'CASH',
       doctorId: body.doctorId ? Number(body.doctorId) : null,
-      note: body.note ? String(body.note) : null
+      note: body.note ? String(body.note) : null,
+      paymentServices: serviceIds.length ? { create: serviceIds.map((serviceId: number) => ({ serviceId })) } : undefined
     },
-    include: { patient: true, doctor: true }
+    include: { patient: true, doctor: true, paymentServices: { include: { service: true } } }
   })
   return { payment }
 })

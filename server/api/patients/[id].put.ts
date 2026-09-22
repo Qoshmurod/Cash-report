@@ -1,6 +1,11 @@
 import { prisma } from '../../utils/prisma'
+import { requirePermission } from '../../utils/auth'
 
 export default defineEventHandler(async (event) => {
+  const user = await requirePermission(event, 'PATIENTS_NAME_EDIT')
+  if (user.role !== 'SUPER_ADMIN' && user.role !== 'OPERATOR') {
+    throw createError({ statusCode: 403, statusMessage: 'Bu amal faqat kassir uchun ruxsat etilgan' })
+  }
   const id = Number(getRouterParam(event, 'id'))
   const body = await readBody(event)
   if (!Number.isInteger(id)) throw createError({ statusCode: 400, statusMessage: 'Noto‘g‘ri bemor ID' })

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 const { data: me } = await useFetch('/api/auth/me')
 const user = computed(() => (me as any).value?.user)
-const canEdit = computed(() => ['SUPER_ADMIN', 'ADMIN'].includes(user.value?.role))
+const canEdit = computed(() => ['SUPER_ADMIN', 'OPERATOR'].includes(user.value?.role))
 const canDelete = computed(() => user.value?.role === 'SUPER_ADMIN')
 const canImport = computed(() => user.value?.role === 'SUPER_ADMIN')
 
