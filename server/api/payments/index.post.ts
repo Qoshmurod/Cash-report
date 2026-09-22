@@ -15,6 +15,7 @@ export default defineEventHandler(async (event) => {
       department: String(body.department || 'PARAZITOLOGIYA'),
       service: body.service ? String(body.service) : null,
       amount,
+      method: ['CASH', 'CARD', 'TRANSFER'].includes(String(body.method)) ? String(body.method) as any : 'CASH',
       note: body.note ? String(body.note) : null
     },
     include: { patient: true }

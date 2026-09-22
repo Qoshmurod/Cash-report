@@ -18,6 +18,7 @@ model Patient {
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
   payments  Payment[]
+  appointments Appointment[]
 
   @@index([fullName])
   @@index([phone])
@@ -32,9 +33,65 @@ model Payment {
   note       String?
   createdAt  DateTime @default(now())
   patient    Patient  @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  method     PaymentMethod @default(CASH)
+  serviceId  Int?
+  serviceRef Service? @relation(fields: [serviceId], references: [id], onDelete: SetNull)
 
   @@index([createdAt])
   @@index([department])
+  @@index([patientId])
+}
+
+enum PaymentMethod {
+  CASH
+  CARD
+  TRANSFER
+}
+
+enum AppointmentStatus {
+  WAITING
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+model Doctor {
+  id           Int           @id @default(autoincrement())
+  fullName     String
+  specialty    String?
+  phone        String?
+  active       Boolean       @default(true)
+  createdAt    DateTime      @default(now())
+  appointments Appointment[]
+}
+
+model Service {
+  id           Int       @id @default(autoincrement())
+  name         String
+  department   String?
+  price        Int
+  active       Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  payments     Payment[]
+  appointments Appointment[]
+  @@index([name])
+}
+
+model Appointment {
+  id          Int               @id @default(autoincrement())
+  patientId   Int
+  doctorId    Int?
+  serviceId   Int?
+  status      AppointmentStatus @default(WAITING)
+  notes       String?
+  scheduledAt DateTime          @default(now())
+  startedAt   DateTime?
+  completedAt DateTime?
+  createdAt   DateTime          @default(now())
+  patient     Patient           @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  doctor      Doctor?           @relation(fields: [doctorId], references: [id], onDelete: SetNull)
+  service     Service?          @relation(fields: [serviceId], references: [id], onDelete: SetNull)
+  @@index([status, scheduledAt])
   @@index([patientId])
 }
 
@@ -55,8 +112,24 @@ model User {
   createdAt            DateTime  @default(now())
   updatedAt            DateTime  @updatedAt
   sessions             Session[]
+  permissions          UserPermission[]
 
   @@index([role])
+}
+
+model Permission {
+  id    Int    @id @default(autoincrement())
+  code  String @unique
+  label String
+  users UserPermission[]
+}
+
+model UserPermission {
+  userId       Int
+  permissionId Int
+  user         User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  permission   Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+  @@id([userId, permissionId])
 }
 
 model Session {

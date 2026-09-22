@@ -80,6 +80,16 @@ export async function requireAuth(event: H3Event, roles?: AuthUser['role'][]) {
   return user
 }
 
+export async function requirePermission(event: H3Event, permission: string) {
+  const user = await requireAuth(event)
+  if (user.role === 'SUPER_ADMIN') return user
+  const granted = await prisma.userPermission.findFirst({
+    where: { userId: user.id, permission: { code: permission } }
+  })
+  if (!granted) throw createError({ statusCode: 403, statusMessage: 'Ruxsat yetarli emas' })
+  return user
+}
+
 export function destroySession(event: H3Event) {
   const id = getCookie(event, SESSION_COOKIE)
   if (id) void prisma.session.delete({ where: { id } }).catch(() => {})
