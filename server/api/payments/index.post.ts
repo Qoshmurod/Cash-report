@@ -1,6 +1,8 @@
 import { prisma } from '../../utils/prisma'
+import { requirePermission } from '../../utils/auth'
 
 export default defineEventHandler(async (event) => {
+  await requirePermission(event, 'PAYMENTS_CREATE')
   const body = await readBody(event)
   const patientId = Number(body?.patientId)
   const amount = Number(body?.amount)
