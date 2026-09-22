@@ -91,33 +91,11 @@ async function onFileChange(e: Event) {
   importing.value = true
 
   try {
-    const text = await file.text()
-    const lines = text.split('\n').map((l) => l.trim()).filter(Boolean)
-    if (lines.length < 2) throw new Error('Fayl bo‘sh')
-
-    const headers = lines[0].split(/[;,\t]/).map((h) => h.trim().toLowerCase())
-    const idxName = headers.findIndex((h) => h.includes('ism') || h.includes('fam') || h.includes('name'))
-    const idxPhone = headers.findIndex((h) => h.includes('tel') || h.includes('phone'))
-    const idxYear = headers.findIndex((h) => h.includes('yil') || h.includes('year'))
-    const idxAddr = headers.findIndex((h) => h.includes('manzil') || h.includes('address'))
-
-    if (idxName < 0) throw new Error('"Ism-familiya" ustuni topilmadi')
-
-    const rows: any[] = []
-    for (let i = 1; i < lines.length; i++) {
-      const cells = lines[i].split(/[;,\t]/).map((c) => c.trim().replace(/^"|"$/g, ''))
-      if (!cells[idxName]) continue
-      rows.push({
-        fullName: cells[idxName],
-        phone: idxPhone >= 0 ? cells[idxPhone] : null,
-        birthYear: idxYear >= 0 ? cells[idxYear] : null,
-        address: idxAddr >= 0 ? cells[idxAddr] : null
-      })
-    }
-
+    const body = new FormData()
+    body.append('file', file)
     const res: any = await $fetch('/api/patients/import', {
       method: 'POST',
-      body: { patients: rows }
+      body
     })
 
     alert(`✅ Qo'shildi: ${res.added}\n⏭ O'tkazib yuborildi: ${res.skipped}`)
@@ -154,7 +132,7 @@ onMounted(load)
         </button>
         <button v-if="canEdit" class="btn" @click="openNew">➕ Yangi bemor</button>
       </div>
-      <input ref="fileInput" type="file" accept=".csv,.txt" style="display: none" @change="onFileChange" />
+      <input ref="fileInput" type="file" accept=".xlsx,.xls,.csv,.txt" style="display: none" @change="onFileChange" />
     </div>
 
     <div class="filters">

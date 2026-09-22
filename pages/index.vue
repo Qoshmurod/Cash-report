@@ -3,6 +3,7 @@ const username = ref('Husanov001')
 const password = ref('Husanov001')
 const error = ref('')
 const loading = ref(false)
+const { t, language, languages } = useI18n()
 
 async function login() {
   error.value = ''
@@ -21,13 +22,16 @@ async function login() {
 <template>
   <main class="login-page">
     <form class="login-card" @submit.prevent="login">
-      <h1>🏥 Klinika Kassasi</h1>
-      <p>Hisobingizga kiring</p>
+      <select v-model="language" class="language-select" aria-label="Language">
+        <option v-for="item in languages" :key="item.value" :value="item.value">{{ item.label }}</option>
+      </select>
+      <h1>🏥 {{ t('clinic') }}</h1>
+      <p>{{ t('loginTitle') }}</p>
       <div class="demo-box">Super admin: <strong>Husanov001</strong> / <strong>Husanov001</strong></div>
-      <label>Login<input v-model="username" autocomplete="username" required /></label>
-      <label>Parol<input v-model="password" type="password" autocomplete="current-password" required /></label>
+      <label>{{ t('username') }}<input v-model="username" autocomplete="username" required /></label>
+      <label>{{ t('password') }}<input v-model="password" type="password" autocomplete="current-password" required /></label>
       <p v-if="error" class="error">{{ error }}</p>
-      <button class="btn" :disabled="loading">{{ loading ? 'Kutilmoqda...' : 'Kirish' }}</button>
+      <button class="btn" :disabled="loading">{{ loading ? t('loading') : t('login') }}</button>
     </form>
   </main>
 </template>
@@ -42,4 +46,5 @@ async function login() {
 .login-card button { width: 100%; margin-top: 10px; }
 .demo-box { margin: 10px 0 18px; padding: 10px 12px; border-radius: 8px; background: #ecfeff; color: #0f172a; font-size: 0.92rem; }
 .error { color: #b91c1c !important; }
+.language-select { float: right; padding: 6px; border: 1px solid #d1d5db; border-radius: 6px; }
 </style>
