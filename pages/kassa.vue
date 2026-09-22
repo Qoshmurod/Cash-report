@@ -155,6 +155,13 @@ async function loadPayments() {
   totalSum.value = (data as any).value?.totalSum || 0
 }
 
+function exportReport() {
+  const params = new URLSearchParams()
+  if (filter.from) params.set('from', filter.from)
+  if (filter.to) params.set('to', filter.to)
+  window.location.href = `/api/reports/payments?${params.toString()}`
+}
+
 async function deletePayment(id: number) {
   if (!canDelete.value) return
   if (!confirm('O‘chirilsinmi?')) return
@@ -381,6 +388,7 @@ onUnmounted(() => clearInterval(interval))
           </select>
         </div>
         <button class="btn secondary" @click="loadPayments">🔍 Filtrlash</button>
+        <button class="btn secondary" @click="exportReport">📊 Excel yuklash</button>
       </div>
 
       <div class="total-line">

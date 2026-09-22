@@ -1,7 +1,3 @@
-export default defineEventHandler(() => ({
-  user: {
-    id: 1,
-    fullName: 'Demo administrator',
-    role: 'SUPER_ADMIN'
-  }
-}))
+import { requireAuth } from '../../utils/auth'
+
+export default defineEventHandler(async (event) => ({ user: await requireAuth(event) }))
