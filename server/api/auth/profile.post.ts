@@ -25,19 +25,12 @@ export default defineEventHandler(async (event) => {
   })
   if (duplicateUsername) throw createError({ statusCode: 409, statusMessage: 'Bu login allaqachon ishlatilgan' })
 
-  const fingerprint = passwordFingerprint(nextPassword)
-  const duplicatePassword = await prisma.user.findFirst({
-    where: { passwordFingerprint: fingerprint, NOT: { id: user.id } },
-    select: { id: true }
-  })
-  if (duplicatePassword) throw createError({ statusCode: 409, statusMessage: 'Bu parol boshqa foydalanuvchida ishlatilgan' })
-
   const updated = await prisma.user.update({
     where: { id: user.id },
     data: {
       username: nextUsername,
       passwordHash: await hashPassword(nextPassword),
-      passwordFingerprint: fingerprint,
+      passwordFingerprint: passwordFingerprint(nextPassword),
       mustChangePassword: false
     }
   })
