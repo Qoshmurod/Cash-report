@@ -10,12 +10,9 @@ export default defineEventHandler(async (event) => {
   if (!record || !await verifyPassword(current, record.passwordHash)) {
     throw createError({ statusCode: 400, statusMessage: 'Joriy parol noto‘g‘ri' })
   }
-  const fingerprint = passwordFingerprint(next)
-  const duplicate = await prisma.user.findUnique({ where: { passwordFingerprint: fingerprint }, select: { id: true } })
-  if (duplicate && duplicate.id !== user.id) throw createError({ statusCode: 409, statusMessage: 'Bu parol boshqa foydalanuvchida ishlatilgan' })
   await prisma.user.update({
     where: { id: user.id },
-    data: { passwordHash: await hashPassword(next), passwordFingerprint: fingerprint, mustChangePassword: false }
+    data: { passwordHash: await hashPassword(next), passwordFingerprint: passwordFingerprint(next), mustChangePassword: false }
   })
   return { ok: true }
 })

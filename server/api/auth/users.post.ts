@@ -16,7 +16,7 @@ export default defineEventHandler(async (event) => {
     })
     return { user }
   } catch (error: any) {
-    if (error?.code === 'P2002') throw createError({ statusCode: 409, statusMessage: 'Login yoki parol allaqachon ishlatilgan' })
+    if (error?.code === 'P2002') throw createError({ statusCode: 409, statusMessage: 'Bu login allaqachon ishlatilgan' })
     throw error
   }
 })

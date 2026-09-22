@@ -48,7 +48,7 @@ model User {
   id                   Int       @id @default(autoincrement())
   username             String    @unique
   passwordHash         String
-  passwordFingerprint  String?   @unique
+  passwordFingerprint  String?
   role                 UserRole  @default(OPERATOR)
   mustChangePassword   Boolean   @default(false)
   disabled             Boolean   @default(false)
