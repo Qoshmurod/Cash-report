@@ -12,6 +12,8 @@ Nuxt 3 clinic cashier and patient-management app backed by Prisma and PostgreSQL
 
 The server API uses Prisma for patient and payment CRUD, search, import, filtering, deletion, statistics, and permission-protected Excel reports. Authentication uses database-backed sessions, scrypt password hashing, an opaque HttpOnly cookie, login throttling, and server-side role checks. Passwords are never stored in plain text; a keyed fingerprint is used only to reject duplicate passwords without making them recoverable.
 
+Super admins can import patient data from the **Bemorlar** page using `.xlsx`, `.xls`, `.csv`, or `.txt` files. The first worksheet is read automatically; columns containing `ism`, `familiya`, `name`, `telefon`, `phone`, `tugilgan yili`, `year`, `manzil`, or `address` are recognized. Rows without a name and duplicate name/phone pairs are skipped, and the import response reports added and skipped rows. The upload is server-side validated and is available only to `SUPER_ADMIN`.
+
 The default ready-made first super admin is `Husanov001` / `Husanov001`. You can override it in `.env` with `BOOTSTRAP_ADMIN_USERNAME` and `BOOTSTRAP_ADMIN_PASSWORD`, but the UI also pre-fills the same values for the login screen. After `prisma:push`, set unique random `NUXT_SESSION_SECRET` and `BOOTSTRAP_ADMIN_TOKEN` values, then call `POST /api/auth/bootstrap` once with `x-bootstrap-token` and the chosen credentials to create the only `SUPER_ADMIN`; the endpoint is permanently closed once any user exists. Admin password resets are performed only by the super admin and force a change on next login. Export reports with `GET /api/reports/payments?from=YYYY-MM-DD&to=YYYY-MM-DD` (ADMIN or SUPER_ADMIN).
 
 ## Deploy to Vercel
