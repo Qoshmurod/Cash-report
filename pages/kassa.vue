@@ -1,5 +1,6 @@
 <script setup lang="ts">
 const { data: me } = await useFetch('/api/auth/me')
+const { t } = useI18n()
 const user = computed(() => (me as any).value?.user)
 const canDelete = computed(() => user.value?.role === 'SUPER_ADMIN')
 
@@ -234,26 +235,26 @@ onUnmounted(() => clearInterval(interval))
 
 <template>
   <div class="kassa-page">
-    <h1>💰 Kassa</h1>
+    <h1>💰 {{ t('cash') }}</h1>
 
     <div v-if="stats" class="stats-grid">
       <div class="stat-card today">
-        <div class="label">Bugun</div>
+        <div class="label">{{ t('today') }}</div>
         <div class="value">{{ formatSum(stats.daily.total) }}</div>
         <div class="count">{{ stats.daily.count }} ta to‘lov</div>
       </div>
       <div class="stat-card week">
-        <div class="label">Bu hafta</div>
+        <div class="label">{{ t('week') }}</div>
         <div class="value">{{ formatSum(stats.weekly.total) }}</div>
         <div class="count">{{ stats.weekly.count }} ta</div>
       </div>
       <div class="stat-card month">
-        <div class="label">Bu oy</div>
+        <div class="label">{{ t('month') }}</div>
         <div class="value">{{ formatSum(stats.monthly.total) }}</div>
         <div class="count">{{ stats.monthly.count }} ta</div>
       </div>
       <div class="stat-card year">
-        <div class="label">Bu yil</div>
+        <div class="label">{{ t('year') }}</div>
         <div class="value">{{ formatSum(stats.yearly.total) }}</div>
         <div class="count">{{ stats.yearly.count }} ta</div>
       </div>
@@ -268,7 +269,7 @@ onUnmounted(() => clearInterval(interval))
     </div>
 
     <div class="card" style="margin-top: 24px">
-      <h2>💵 Yangi to‘lov</h2>
+      <h2>💵 {{ t('newPayment') }}</h2>
 
       <div v-if="!selectedPatient" class="patient-search">
         <label class="search-label">1️⃣ Bemor izlash (ism yoki telefon)</label>
@@ -365,25 +366,25 @@ onUnmounted(() => clearInterval(interval))
     </div>
 
     <div class="card" style="margin-top: 24px">
-      <h2>📋 To‘lovlar tarixi</h2>
+      <h2>📋 {{ t('paymentHistory') }}</h2>
 
       <div class="filters">
         <div class="field">
-          <label>Bemor ismi</label>
+          <label>{{ t('search') }}</label>
           <input v-model="filter.search" type="text" placeholder="Karimov" />
         </div>
         <div class="field">
-          <label>Dan</label>
+          <label>{{ t('from') }}</label>
           <input v-model="filter.from" type="date" />
         </div>
         <div class="field">
-          <label>Gacha</label>
+          <label>{{ t('to') }}</label>
           <input v-model="filter.to" type="date" />
         </div>
         <div class="field">
-          <label>Bo‘lim</label>
+          <label>{{ t('department') }}</label>
           <select v-model="filter.department">
-            <option value="ALL">Barchasi</option>
+            <option value="ALL">{{ t('all') }}</option>
             <option v-for="d in departments" :key="d.value" :value="d.value">{{ d.label }}</option>
           </select>
         </div>

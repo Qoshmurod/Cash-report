@@ -28,8 +28,10 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 400, statusMessage: 'Excel jadvali bo‘sh yoki bemorlar ro‘yxati berilmagan' })
   }
 
-  const existing = await prisma.patient.findMany({ select: { fullName: true, phone: true } })
-  const known = new Set(existing.map((item) => `${item.fullName.trim().toLocaleLowerCase()}|${item.phone?.trim() || ''}`))
+  const existing = await prisma.patient.findMany({ select: { fullName: true, phone: true, birthYear: true } })
+  const keyFor = (fullName: string, phone: string | null, birthYear: number | null) =>
+    `${fullName.trim().toLocaleLowerCase()}|${phone?.trim() || ''}|${birthYear ?? ''}`
+  const known = new Set(existing.map((item) => keyFor(item.fullName, item.phone, item.birthYear)))
   const seen = new Set<string>()
   const rows: Array<{ fullName: string; phone: string | null; birthYear: number | null; address: string | null }> = []
   let skipped = 0
@@ -50,17 +52,18 @@ export default defineEventHandler(async (event) => {
     }
     const phoneValue = value(['tel', 'phone', 'telefon'])
     const phone = phoneValue ? String(phoneValue).trim() : null
-    const key = `${fullName.toLocaleLowerCase()}|${phone || ''}`
+    const yearValue = value(['yil', 'year', 'birth'])
+    const parsedYear = Number(yearValue)
+    const birthYear = Number.isInteger(parsedYear) && parsedYear >= 1900 && parsedYear <= new Date().getFullYear() ? parsedYear : null
+    const key = keyFor(fullName, phone, birthYear)
     if (known.has(key) || seen.has(key)) {
       skipped++
       continue
     }
-    const yearValue = value(['yil', 'year', 'birth'])
-    const parsedYear = Number(yearValue)
     rows.push({
       fullName,
       phone,
-      birthYear: Number.isInteger(parsedYear) && parsedYear >= 1900 && parsedYear <= new Date().getFullYear() ? parsedYear : null,
+      birthYear,
       address: value(['manzil', 'address', 'adres']) ? String(value(['manzil', 'address', 'adres'])).trim() : null
     })
     seen.add(key)
