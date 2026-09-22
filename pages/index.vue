@@ -27,7 +27,6 @@ async function login() {
       </select>
       <h1>🏥 {{ t('clinic') }}</h1>
       <p>{{ t('loginTitle') }}</p>
-      <div class="demo-box">Super admin: <strong>Husanov001</strong> / <strong>Husanov001!99</strong></div>
       <label>{{ t('username') }}<input v-model="username" autocomplete="username" required /></label>
       <label>{{ t('password') }}<input v-model="password" type="password" autocomplete="current-password" required /></label>
       <p v-if="error" class="error">{{ error }}</p>
@@ -44,7 +43,6 @@ async function login() {
 .login-card label { display: grid; gap: 6px; margin: 16px 0; font-weight: 600; }
 .login-card input { padding: 11px; border: 1px solid #d1d5db; border-radius: 8px; font: inherit; }
 .login-card button { width: 100%; margin-top: 10px; }
-.demo-box { margin: 10px 0 18px; padding: 10px 12px; border-radius: 8px; background: #ecfeff; color: #0f172a; font-size: 0.92rem; }
 .error { color: #b91c1c !important; }
 .language-select { float: right; padding: 6px; border: 1px solid #d1d5db; border-radius: 6px; }
 </style>
