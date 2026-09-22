@@ -1,6 +1,6 @@
 <script setup lang="ts">
 const username = ref('Husanov001')
-const password = ref('Husanov001')
+const password = ref('Husanov001!99')
 const error = ref('')
 const loading = ref(false)
 const { t, language, languages } = useI18n()
@@ -27,7 +27,7 @@ async function login() {
       </select>
       <h1>🏥 {{ t('clinic') }}</h1>
       <p>{{ t('loginTitle') }}</p>
-      <div class="demo-box">Super admin: <strong>Husanov001</strong> / <strong>Husanov001</strong></div>
+      <div class="demo-box">Super admin: <strong>Husanov001</strong> / <strong>Husanov001!99</strong></div>
       <label>{{ t('username') }}<input v-model="username" autocomplete="username" required /></label>
       <label>{{ t('password') }}<input v-model="password" type="password" autocomplete="current-password" required /></label>
       <p v-if="error" class="error">{{ error }}</p>
