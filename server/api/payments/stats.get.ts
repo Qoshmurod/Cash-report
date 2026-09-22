@@ -1,4 +1,5 @@
 import { prisma } from '../../utils/prisma'
+import { requirePermission } from '../../utils/auth'
 
 function startOfDay(date: Date) {
   const value = new Date(date)
@@ -14,14 +15,15 @@ function periodStart(date: Date, days: number) {
 
 async function totals(from: Date) {
   const result = await prisma.payment.aggregate({
-    where: { createdAt: { gte: from } },
+    where: { createdAt: { gte: from }, ...(user.doctorId ? { doctorId: user.doctorId } : {}) },
     _sum: { amount: true },
     _count: { _all: true }
   })
   return { total: result._sum.amount || 0, count: result._count._all }
 }
 
-export default defineEventHandler(async () => {
+export default defineEventHandler(async (event) => {
+  const user = await requirePermission(event, 'REPORTS_DAILY')
   const now = new Date()
   const [daily, weekly, monthly, yearly, departmentStats] = await Promise.all([
     totals(startOfDay(now)),
@@ -30,7 +32,7 @@ export default defineEventHandler(async () => {
     totals(new Date(now.getFullYear(), 0, 1)),
     prisma.payment.groupBy({
       by: ['department'],
-      where: { createdAt: { gte: new Date(now.getFullYear(), now.getMonth(), 1) } },
+      where: { createdAt: { gte: new Date(now.getFullYear(), now.getMonth(), 1) }, ...(user.doctorId ? { doctorId: user.doctorId } : {}) },
       _sum: { amount: true },
       _count: { _all: true }
     })

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-const { data, refresh } = await useFetch('/api/admin/permissions')
+const { data, refresh } = await useFetch('/api/admin/permissions', { server: false })
 async function toggle(userId: number, permissionId: number, enabled: boolean) {
   await $fetch('/api/admin/permissions', { method: 'POST', body: { userId, permissionId, enabled } })
   await refresh()

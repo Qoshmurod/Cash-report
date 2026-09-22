@@ -17,6 +17,7 @@ export type AuthUser = {
   username: string
   role: 'SUPER_ADMIN' | 'ADMIN' | 'OPERATOR'
   mustChangePassword: boolean
+  doctorId?: number | null
 }
 
 function secret() {
@@ -70,6 +71,7 @@ export async function getAuthUser(event: H3Event): Promise<AuthUser | null> {
     username: session.user.username,
     role: session.user.role,
     mustChangePassword: session.user.mustChangePassword
+    ,doctorId: session.user.doctorId
   }
 }
 

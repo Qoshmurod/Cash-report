@@ -36,10 +36,13 @@ model Payment {
   method     PaymentMethod @default(CASH)
   serviceId  Int?
   serviceRef Service? @relation(fields: [serviceId], references: [id], onDelete: SetNull)
+  doctorId   Int?
+  doctor     Doctor? @relation(fields: [doctorId], references: [id], onDelete: SetNull)
 
   @@index([createdAt])
   @@index([department])
   @@index([patientId])
+  @@index([doctorId])
 }
 
 enum PaymentMethod {
@@ -63,6 +66,8 @@ model Doctor {
   active       Boolean       @default(true)
   createdAt    DateTime      @default(now())
   appointments Appointment[]
+  payments     Payment[]
+  user         User?
 }
 
 model Service {
@@ -113,6 +118,8 @@ model User {
   updatedAt            DateTime  @updatedAt
   sessions             Session[]
   permissions          UserPermission[]
+  doctorId             Int?      @unique
+  doctor               Doctor?  @relation(fields: [doctorId], references: [id], onDelete: SetNull)
 
   @@index([role])
 }

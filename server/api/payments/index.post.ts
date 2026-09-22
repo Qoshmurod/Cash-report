@@ -16,9 +16,10 @@ export default defineEventHandler(async (event) => {
       service: body.service ? String(body.service) : null,
       amount,
       method: ['CASH', 'CARD', 'TRANSFER'].includes(String(body.method)) ? String(body.method) as any : 'CASH',
+      doctorId: body.doctorId ? Number(body.doctorId) : null,
       note: body.note ? String(body.note) : null
     },
-    include: { patient: true }
+    include: { patient: true, doctor: true }
   })
   return { payment }
 })

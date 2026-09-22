@@ -1,7 +1,7 @@
 <script setup lang="ts">
-const { data: patients } = await useFetch('/api/patients', { query: { page: 1 } })
-const { data: doctors } = await useFetch('/api/doctors')
-const { data: services } = await useFetch('/api/services')
+const { data: patients } = await useFetch('/api/patients', { query: { page: 1 }, server: false })
+const { data: doctors } = await useFetch('/api/doctors', { server: false })
+const { data: services } = await useFetch('/api/services', { server: false })
 const appointments = ref<any[]>([])
 const form = reactive({ patientId: '', doctorId: '', serviceId: '' })
 async function load() {

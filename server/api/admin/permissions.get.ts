@@ -12,6 +12,8 @@ const catalog = [
   ['REPORTS_MONTHLY', 'Oylik hisobot'],
   ['REPORTS_YEARLY', 'Yillik hisobot'],
   ['REPORTS_EXPORT', 'Excel eksport']
+  ,['PAYMENTS_VIEW', 'To‘lovlarni ko‘rish']
+  ,['PAYMENTS_CREATE', 'To‘lov kiritish']
 ] as const
 
 export default defineEventHandler(async (event) => {
