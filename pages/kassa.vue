@@ -1,6 +1,8 @@
 <script setup lang="ts">
 const { data: me } = await useFetch('/api/auth/me')
+const { data: doctors } = await useFetch('/api/doctors', { server: false })
 const { t } = useI18n()
+const doctorList = computed(() => (doctors.value as any)?.doctors || [])
 const user = computed(() => (me as any).value?.user)
 const canDelete = computed(() => user.value?.role === 'SUPER_ADMIN')
 
@@ -22,6 +24,8 @@ async function loadStats() {
 const form = reactive({
   patientId: null as number | null,
   department: 'PARAZITOLOGIYA',
+  doctorId: null as number | null,
+  method: 'CASH',
   service: '',
   amount: '',
   note: ''
@@ -116,6 +120,8 @@ async function savePayment() {
       body: {
         patientId: form.patientId,
         department: form.department,
+        doctorId: form.doctorId,
+        method: form.method,
         service: form.service,
         amount: Number(form.amount),
         note: form.note
@@ -127,6 +133,8 @@ async function savePayment() {
     Object.assign(form, {
       patientId: null,
       department: 'PARAZITOLOGIYA',
+      doctorId: null,
+      method: 'CASH',
       service: '',
       amount: '',
       note: ''
@@ -331,6 +339,23 @@ onUnmounted(() => clearInterval(interval))
           <div class="field">
             <label>Xizmat nomi</label>
             <input v-model="form.service" type="text" placeholder="Qon analizi" />
+          </div>
+
+          <div class="field">
+            <label>Shifokor</label>
+            <select v-model="form.doctorId">
+              <option :value="null">Tanlanmagan</option>
+              <option v-for="d in doctorList" :key="d.id" :value="d.id">{{ d.fullName }}</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label>To‘lov turi *</label>
+            <select v-model="form.method">
+              <option value="CASH">Naqd</option>
+              <option value="CARD">Plastik</option>
+              <option value="TRANSFER">O‘tkazma</option>
+            </select>
           </div>
 
           <div class="field">

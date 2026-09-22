@@ -17,6 +17,7 @@ export type AuthUser = {
   username: string
   role: 'SUPER_ADMIN' | 'ADMIN' | 'OPERATOR'
   mustChangePassword: boolean
+  doctorId?: number | null
 }
 
 function secret() {
@@ -70,6 +71,7 @@ export async function getAuthUser(event: H3Event): Promise<AuthUser | null> {
     username: session.user.username,
     role: session.user.role,
     mustChangePassword: session.user.mustChangePassword
+    ,doctorId: session.user.doctorId
   }
 }
 
@@ -77,6 +79,16 @@ export async function requireAuth(event: H3Event, roles?: AuthUser['role'][]) {
   const user = await getAuthUser(event)
   if (!user) throw createError({ statusCode: 401, statusMessage: 'Autentifikatsiya talab qilinadi' })
   if (roles && !roles.includes(user.role)) throw createError({ statusCode: 403, statusMessage: 'Ruxsat yetarli emas' })
+  return user
+}
+
+export async function requirePermission(event: H3Event, permission: string) {
+  const user = await requireAuth(event)
+  if (user.role === 'SUPER_ADMIN') return user
+  const granted = await prisma.userPermission.findFirst({
+    where: { userId: user.id, permission: { code: permission } }
+  })
+  if (!granted) throw createError({ statusCode: 403, statusMessage: 'Ruxsat yetarli emas' })
   return user
 }
 

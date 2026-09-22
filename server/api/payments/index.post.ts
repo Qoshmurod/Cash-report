@@ -1,6 +1,8 @@
 import { prisma } from '../../utils/prisma'
+import { requirePermission } from '../../utils/auth'
 
 export default defineEventHandler(async (event) => {
+  await requirePermission(event, 'PAYMENTS_CREATE')
   const body = await readBody(event)
   const patientId = Number(body?.patientId)
   const amount = Number(body?.amount)
@@ -15,9 +17,11 @@ export default defineEventHandler(async (event) => {
       department: String(body.department || 'PARAZITOLOGIYA'),
       service: body.service ? String(body.service) : null,
       amount,
+      method: ['CASH', 'CARD', 'TRANSFER'].includes(String(body.method)) ? String(body.method) as any : 'CASH',
+      doctorId: body.doctorId ? Number(body.doctorId) : null,
       note: body.note ? String(body.note) : null
     },
-    include: { patient: true }
+    include: { patient: true, doctor: true }
   })
   return { payment }
 })

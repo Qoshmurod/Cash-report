@@ -47,6 +47,8 @@ onMounted(loadUser)
       <nav class="nav">
         <NuxtLink to="/kassa" :class="{ active: route.path === '/kassa' }">💰 {{ t('cash') }}</NuxtLink>
         <NuxtLink to="/patients" :class="{ active: route.path === '/patients' }">👥 {{ t('patients') }}</NuxtLink>
+        <NuxtLink to="/reception" :class="{ active: route.path === '/reception' }">📋 Qabul</NuxtLink>
+        <NuxtLink to="/admin" :class="{ active: route.path === '/admin' }">⚙️ Admin</NuxtLink>
         <select v-model="language" class="language-select" aria-label="Language">
           <option v-for="item in languages" :key="item.value" :value="item.value">{{ item.label }}</option>
         </select>

@@ -1,9 +1,9 @@
 import * as XLSX from 'xlsx'
 import { prisma } from '../../utils/prisma'
-import { requireAuth } from '../../utils/auth'
+import { requirePermission } from '../../utils/auth'
 
 export default defineEventHandler(async (event) => {
-  await requireAuth(event, ['SUPER_ADMIN', 'ADMIN'])
+  const user = await requirePermission(event, 'REPORTS_EXPORT')
   const query = getQuery(event)
   const from = query.from ? new Date(`${query.from}T00:00:00.000Z`) : undefined
   const to = query.to ? new Date(`${query.to}T23:59:59.999Z`) : undefined
@@ -11,8 +11,8 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 400, statusMessage: 'Sana oralig‘i noto‘g‘ri' })
   }
   const payments = await prisma.payment.findMany({
-    where: { createdAt: { ...(from ? { gte: from } : {}), ...(to ? { lte: to } : {}) } },
-    include: { patient: true },
+    where: { createdAt: { ...(from ? { gte: from } : {}), ...(to ? { lte: to } : {}) }, ...(user.doctorId ? { doctorId: user.doctorId } : {}) },
+    include: { patient: true, doctor: true },
     orderBy: { createdAt: 'asc' }
   })
   const rows: Record<string, string | number>[] = payments.map((p) => ({
@@ -20,6 +20,7 @@ export default defineEventHandler(async (event) => {
     Sana: p.createdAt.toISOString(),
     Bemor: p.patient.fullName,
     Telefon: p.patient.phone || '',
+    Shifokor: p.doctor?.fullName || '',
     'Bo‘lim': p.department,
     'Xizmat': p.service || '',
     Summa: p.amount,
