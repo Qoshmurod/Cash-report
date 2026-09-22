@@ -1,5 +1,5 @@
-import { prisma } from '../../../utils/prisma'
-import { requirePermission } from '../../../utils/auth'
+import { prisma } from '../../utils/prisma'
+import { requirePermission } from '../../utils/auth'
 export default defineEventHandler(async (event) => {
   await requirePermission(event, 'APPOINTMENTS_MANAGE')
   const id = Number(getRouterParam(event, 'id'))
