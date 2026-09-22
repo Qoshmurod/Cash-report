@@ -10,7 +10,12 @@ export default defineEventHandler(async (event) => {
   const from = query.from ? new Date(`${query.from}T00:00:00.000Z`) : undefined
   const to = query.to ? new Date(`${query.to}T23:59:59.999Z`) : undefined
   const where = {
-    ...(department ? { department } : {}),
+    ...(department ? {
+      OR: [
+        { department },
+        { paymentServices: { some: { service: { department } } } }
+      ]
+    } : {}),
     ...(Number.isInteger(doctorId) ? { doctorId } : {}),
     ...(user.doctorId ? { doctorId: user.doctorId } : {}),
     ...(search ? { patient: { fullName: { contains: search, mode: 'insensitive' as const } } } : {}),
@@ -18,7 +23,7 @@ export default defineEventHandler(async (event) => {
   }
   const payments = await prisma.payment.findMany({
     where,
-    include: { patient: true, doctor: true },
+    include: { patient: true, doctor: true, paymentServices: { include: { service: true } } },
     orderBy: { createdAt: 'desc' }
   })
   return { payments, totalSum: payments.reduce((sum, payment) => sum + payment.amount, 0) }

@@ -38,6 +38,7 @@ model Payment {
   serviceRef Service? @relation(fields: [serviceId], references: [id], onDelete: SetNull)
   doctorId   Int?
   doctor     Doctor? @relation(fields: [doctorId], references: [id], onDelete: SetNull)
+  paymentServices PaymentService[]
 
   @@index([createdAt])
   @@index([department])
@@ -79,7 +80,18 @@ model Service {
   createdAt    DateTime @default(now())
   payments     Payment[]
   appointments Appointment[]
+  paymentSelections PaymentService[]
+  @@unique([name, department])
   @@index([name])
+}
+
+model PaymentService {
+  paymentId Int
+  serviceId Int
+  payment   Payment @relation(fields: [paymentId], references: [id], onDelete: Cascade)
+  service   Service @relation(fields: [serviceId], references: [id], onDelete: Restrict)
+  @@id([paymentId, serviceId])
+  @@index([serviceId])
 }
 
 model Appointment {

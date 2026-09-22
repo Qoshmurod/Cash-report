@@ -1,8 +1,10 @@
 <script setup lang="ts">
 const { data: me } = await useFetch('/api/auth/me')
 const { data: doctors } = await useFetch('/api/doctors', { server: false })
+const { data: services } = await useFetch('/api/services', { server: false })
 const { t } = useI18n()
 const doctorList = computed(() => (doctors.value as any)?.doctors || [])
+const serviceList = computed(() => (services.value as any)?.services || [])
 const user = computed(() => (me as any).value?.user)
 const canDelete = computed(() => user.value?.role === 'SUPER_ADMIN')
 
@@ -12,6 +14,10 @@ const departments = [
   { value: 'BAKTERIOLOGIYA', label: 'Bakteriologiya' },
   { value: 'SAN_MINIMUM', label: 'San minimum' }
 ]
+const serviceGroups = computed(() => departments.map((department) => ({
+  ...department,
+  services: serviceList.value.filter((service: any) => service.department === department.value)
+})))
 
 // Statistika
 const stats = ref<any>(null)
@@ -26,6 +32,7 @@ const form = reactive({
   department: 'PARAZITOLOGIYA',
   doctorId: null as number | null,
   method: 'CASH',
+  serviceIds: [] as number[],
   service: '',
   amount: '',
   note: ''
@@ -122,6 +129,7 @@ async function savePayment() {
         department: form.department,
         doctorId: form.doctorId,
         method: form.method,
+        serviceIds: form.serviceIds,
         service: form.service,
         amount: Number(form.amount),
         note: form.note
@@ -135,6 +143,7 @@ async function savePayment() {
       department: 'PARAZITOLOGIYA',
       doctorId: null,
       method: 'CASH',
+      serviceIds: [],
       service: '',
       amount: '',
       note: ''
@@ -230,6 +239,9 @@ function formatDate(d: string) {
 }
 function depLabel(d: string) {
   return departments.find((x) => x.value === d)?.label || d
+}
+function paymentServices(payment: any) {
+  return payment.paymentServices?.map((item: any) => item.service.name).join(', ') || payment.service || '—'
 }
 
 let interval: any
@@ -336,9 +348,16 @@ onUnmounted(() => clearInterval(interval))
             </select>
           </div>
 
-          <div class="field">
-            <label>Xizmat nomi</label>
-            <input v-model="form.service" type="text" placeholder="Qon analizi" />
+          <div class="field service-picker">
+            <label>Analiz/xizmatlar (bir yoki bir nechta)</label>
+            <div v-for="group in serviceGroups" :key="group.value" class="service-group">
+              <strong>{{ group.label }}</strong>
+              <label v-for="service in group.services" :key="service.id" class="service-option">
+                <input v-model="form.serviceIds" type="checkbox" :value="service.id" />
+                <span>{{ service.name }}</span>
+              </label>
+            </div>
+            <input v-model="form.service" type="text" placeholder="Qo‘shimcha xizmat nomi (ixtiyoriy)" />
           </div>
 
           <div class="field">
@@ -429,7 +448,7 @@ onUnmounted(() => clearInterval(interval))
             <th>Bemor ism-familiyasi</th>
             <th>Telefon</th>
             <th>Bo‘lim</th>
-            <th>Xizmat</th>
+            <th>Analiz/xizmatlar</th>
             <th>Summa</th>
             <th v-if="canDelete">Amal</th>
           </tr>
@@ -441,7 +460,7 @@ onUnmounted(() => clearInterval(interval))
             <td><strong>{{ p.patient.fullName }}</strong></td>
             <td>{{ p.patient.phone || '—' }}</td>
             <td>{{ depLabel(p.department) }}</td>
-            <td>{{ p.service || '—' }}</td>
+            <td>{{ paymentServices(p) }}</td>
             <td class="sum">{{ formatSum(Number(p.amount)) }}</td>
             <td v-if="canDelete">
               <button class="btn danger small" @click="deletePayment(p.id)">🗑</button>

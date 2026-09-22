@@ -1,6 +1,8 @@
 import { prisma } from '../../utils/prisma'
-import { requirePermission } from '../../utils/auth'
+import { requireAnyPermission } from '../../utils/auth'
+import { ensureServiceCatalog } from '../../utils/service-catalog'
 export default defineEventHandler(async (event) => {
-  await requirePermission(event, 'SERVICES_VIEW')
+  await requireAnyPermission(event, ['SERVICES_VIEW', 'PAYMENTS_CREATE'])
+  await ensureServiceCatalog()
   return { services: await prisma.service.findMany({ where: { active: true }, orderBy: { name: 'asc' } }) }
 })
