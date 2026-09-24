@@ -6,5 +6,8 @@ export default defineEventHandler(async (event) => {
   const name = String(body?.name || '').trim()
   const price = Number(body?.price)
   if (!name || !Number.isSafeInteger(price) || price < 0) throw createError({ statusCode: 400, statusMessage: 'Xizmat nomi va narxi noto‘g‘ri' })
-  return { service: await prisma.service.create({ data: { name, price, department: body.department ? String(body.department) : null } }) }
+  const departmentCode = body.department ? String(body.department).trim().toUpperCase() : ''
+  const department = departmentCode ? await prisma.department.findUnique({ where: { code: departmentCode } }) : null
+  if (departmentCode && !department) throw createError({ statusCode: 404, statusMessage: 'Bo‘lim topilmadi' })
+  return { service: await prisma.service.create({ data: { name, price, department: department?.code || null, departmentId: department?.id || null } }) }
 })

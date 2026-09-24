@@ -52,6 +52,16 @@ export async function createSession(event: H3Event, user: AuthUser) {
   await prisma.session.create({
     data: { id, userId: user.id, expiresAt: new Date(Date.now() + SESSION_TTL_MS) }
   })
+  await prisma.loginHistory.create({
+    data: {
+      userId: user.id,
+      username: user.username,
+      role: user.role,
+      ipAddress: getRequestIP(event, { xForwardedFor: true }) || null,
+      userAgent: getHeader(event, 'user-agent') || null,
+      success: true
+    }
+  })
   setCookie(event, SESSION_COOKIE, id, {
     httpOnly: true,
     sameSite: 'lax',
@@ -102,8 +112,35 @@ export async function requireAnyPermission(event: H3Event, permissions: string[]
   return user
 }
 
-export function destroySession(event: H3Event) {
+export async function destroySession(event: H3Event) {
   const id = getCookie(event, SESSION_COOKIE)
-  if (id) void prisma.session.delete({ where: { id } }).catch(() => {})
+  if (id) {
+    const session = await prisma.session.findUnique({ where: { id }, include: { user: true } })
+    if (session) {
+      await prisma.loginHistory.updateMany({ where: { userId: session.userId, logoutAt: null }, data: { logoutAt: new Date() } })
+      await prisma.session.delete({ where: { id } })
+    }
+  }
   deleteCookie(event, SESSION_COOKIE, { path: '/' })
+}
+
+export async function writeAudit(event: H3Event, input: {
+  userId?: number
+  action: string
+  entity: string
+  entityId?: string | number
+  previous?: unknown
+  next?: unknown
+}) {
+  await prisma.auditLog.create({
+    data: {
+      userId: input.userId,
+      action: input.action,
+      entity: input.entity,
+      entityId: input.entityId === undefined ? null : String(input.entityId),
+      previous: input.previous === undefined ? null : JSON.stringify(input.previous),
+      next: input.next === undefined ? null : JSON.stringify(input.next),
+      ipAddress: getRequestIP(event, { xForwardedFor: true }) || null
+    }
+  })
 }
