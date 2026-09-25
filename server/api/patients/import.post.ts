@@ -1,9 +1,10 @@
 import * as XLSX from 'xlsx'
 import { prisma } from '../../utils/prisma'
 import { requireAuth } from '../../utils/auth'
+import { recordAudit } from '../../utils/audit'
 
 export default defineEventHandler(async (event) => {
-  await requireAuth(event, ['SUPER_ADMIN'])
+  const user = await requireAuth(event, ['SUPER_ADMIN'])
   const contentType = getHeader(event, 'content-type') || ''
   let sourceRows: unknown[] = []
 
@@ -70,5 +71,10 @@ export default defineEventHandler(async (event) => {
   }
 
   if (rows.length) await prisma.patient.createMany({ data: rows })
+  await recordAudit(event, user, {
+    action: 'IMPORT',
+    entity: 'Patient',
+    details: { added: rows.length, skipped, total: sourceRows.length }
+  })
   return { added: rows.length, skipped, total: sourceRows.length }
 })

@@ -2,21 +2,18 @@
 const { data: me } = await useFetch('/api/auth/me')
 const { data: doctors } = await useFetch('/api/doctors', { server: false })
 const { data: services } = await useFetch('/api/services', { server: false })
+const { data: departmentsData } = await useFetch('/api/departments', { server: false })
 const { t } = useI18n()
 const doctorList = computed(() => (doctors.value as any)?.doctors || [])
 const serviceList = computed(() => (services.value as any)?.services || [])
+const departmentList = computed(() => (departmentsData.value as any)?.departments || [])
 const user = computed(() => (me as any).value?.user)
 const canDelete = computed(() => user.value?.role === 'SUPER_ADMIN')
 
-const departments = [
-  { value: 'PARAZITOLOGIYA', label: 'Parazitologiya' },
-  { value: 'VIRUSOLOGIYA', label: 'Virusologiya' },
-  { value: 'BAKTERIOLOGIYA', label: 'Bakteriologiya' },
-  { value: 'SAN_MINIMUM', label: 'San minimum' }
-]
-const serviceGroups = computed(() => departments.map((department) => ({
-  ...department,
-  services: serviceList.value.filter((service: any) => service.department === department.value)
+const serviceGroups = computed(() => departmentList.value.map((department: any) => ({
+  value: department.code,
+  label: department.name,
+  services: serviceList.value.filter((service: any) => service.department === department.code)
 })))
 
 // Statistika
@@ -29,7 +26,7 @@ async function loadStats() {
 // Forma
 const form = reactive({
   patientId: null as number | null,
-  department: 'PARAZITOLOGIYA',
+  department: '',
   doctorId: null as number | null,
   method: 'CASH',
   serviceIds: [] as number[],
@@ -140,7 +137,7 @@ async function savePayment() {
     clearPatient()
     Object.assign(form, {
       patientId: null,
-      department: 'PARAZITOLOGIYA',
+      department: departmentList.value[0]?.code || '',
       doctorId: null,
       method: 'CASH',
       serviceIds: [],
@@ -238,7 +235,7 @@ function formatDate(d: string) {
   })
 }
 function depLabel(d: string) {
-  return departments.find((x) => x.value === d)?.label || d
+  return departmentList.value.find((item: any) => item.code === d)?.name || d
 }
 function paymentServices(payment: any) {
   return payment.paymentServices?.map((item: any) => item.service.name).join(', ') || payment.service || '—'
@@ -342,8 +339,8 @@ onUnmounted(() => clearInterval(interval))
           <div class="field">
             <label>Bo‘lim *</label>
             <select v-model="form.department">
-              <option v-for="d in departments" :key="d.value" :value="d.value">
-                {{ d.label }}
+              <option v-for="d in departmentList" :key="d.code" :value="d.code">
+                {{ d.name }}
               </option>
             </select>
           </div>
@@ -429,7 +426,7 @@ onUnmounted(() => clearInterval(interval))
           <label>{{ t('department') }}</label>
           <select v-model="filter.department">
             <option value="ALL">{{ t('all') }}</option>
-            <option v-for="d in departments" :key="d.value" :value="d.value">{{ d.label }}</option>
+            <option v-for="d in departmentList" :key="d.code" :value="d.code">{{ d.name }}</option>
           </select>
         </div>
         <button class="btn secondary" @click="loadPayments">🔍 Filtrlash</button>

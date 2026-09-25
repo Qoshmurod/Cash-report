@@ -1,8 +1,11 @@
 import { prisma } from '../../utils/prisma'
 import { requirePermission } from '../../utils/auth'
+import { recordAudit } from '../../utils/audit'
+import { ensureServiceCatalog } from '../../utils/service-catalog'
 
 export default defineEventHandler(async (event) => {
-  await requirePermission(event, 'PAYMENTS_CREATE')
+  const user = await requirePermission(event, 'PAYMENTS_CREATE')
+  await ensureServiceCatalog()
   const body = await readBody(event)
   const rawServiceIds: number[] = Array.isArray(body?.serviceIds)
     ? body.serviceIds.map((value: unknown) => Number(value)).filter((id: number) => Number.isInteger(id) && id > 0)
@@ -22,7 +25,11 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 400, statusMessage: 'Tanlangan xizmatlardan biri topilmadi' })
   }
   const departments = [...new Set(selectedServices.map((service) => service.department).filter(Boolean))]
-  const department = departments.length === 1 ? departments[0]! : String(body.department || 'PARAZITOLOGIYA')
+  const requestedDepartment = body.department ? String(body.department) : null
+  const department = departments.length === 1
+    ? departments[0]!
+    : requestedDepartment || (await prisma.department.findFirst({ where: { active: true }, orderBy: { name: 'asc' } }))?.code
+  if (!department) throw createError({ statusCode: 400, statusMessage: 'Bo‘lim tanlanmagan' })
   const payment = await prisma.payment.create({
     data: {
       patientId,
@@ -35,6 +42,12 @@ export default defineEventHandler(async (event) => {
       paymentServices: serviceIds.length ? { create: serviceIds.map((serviceId: number) => ({ serviceId })) } : undefined
     },
     include: { patient: true, doctor: true, paymentServices: { include: { service: true } } }
+  })
+  await recordAudit(event, user, {
+    action: 'CREATE',
+    entity: 'Payment',
+    entityId: payment.id,
+    details: { patientId, amount, method: payment.method, department: payment.department }
   })
   return { payment }
 })

@@ -75,14 +75,27 @@ model Service {
   id           Int       @id @default(autoincrement())
   name         String
   department   String?
+  departmentId Int?
   price        Int
   active       Boolean  @default(true)
   createdAt    DateTime @default(now())
   payments     Payment[]
   appointments Appointment[]
   paymentSelections PaymentService[]
+  departmentRef Department? @relation(fields: [departmentId], references: [id], onDelete: SetNull)
   @@unique([name, department])
   @@index([name])
+  @@index([departmentId])
+}
+
+model Department {
+  id        Int       @id @default(autoincrement())
+  code      String    @unique
+  name      String
+  active    Boolean   @default(true)
+  createdAt DateTime  @default(now())
+  services  Service[]
+  @@index([active])
 }
 
 model PaymentService {
@@ -130,6 +143,7 @@ model User {
   updatedAt            DateTime  @updatedAt
   sessions             Session[]
   permissions          UserPermission[]
+  auditLogs            AuditLog[]
   doctorId             Int?      @unique
   doctor               Doctor?  @relation(fields: [doctorId], references: [id], onDelete: SetNull)
 
@@ -160,4 +174,19 @@ model Session {
 
   @@index([userId])
   @@index([expiresAt])
+}
+
+model AuditLog {
+  id        Int      @id @default(autoincrement())
+  userId    Int?
+  action    String
+  entity    String
+  entityId  String?
+  details   Json?
+  ipAddress String?
+  createdAt DateTime @default(now())
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  @@index([createdAt])
+  @@index([userId, createdAt])
+  @@index([entity, entityId])
 }

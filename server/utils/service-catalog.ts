@@ -22,9 +22,30 @@ export const SERVICE_CATALOG = [
   ['VIRUSOLOGIYA', 'Gonokokka tekshiruv']
 ] as const
 
+export const DEPARTMENT_CATALOG = [
+  ['BAKTERIOLOGIYA', 'Bakteriologiya'],
+  ['PARAZITOLOGIYA', 'Parazitologiya'],
+  ['VIRUSOLOGIYA', 'Virusologiya'],
+  ['SAN_MINIMUM', 'San. Minimum']
+] as const
+
 export async function ensureServiceCatalog() {
+  await prisma.department.createMany({
+    data: DEPARTMENT_CATALOG.map(([code, name]) => ({ code, name })),
+    skipDuplicates: true
+  })
+  const departments = await prisma.department.findMany({
+    where: { code: { in: DEPARTMENT_CATALOG.map(([code]) => code) } },
+    select: { id: true, code: true }
+  })
+  const departmentIds = new Map(departments.map((department) => [department.code, department.id]))
   await prisma.service.createMany({
-    data: SERVICE_CATALOG.map(([department, name]) => ({ department, name, price: 0 })),
+    data: SERVICE_CATALOG.map(([department, name]) => ({
+      department,
+      departmentId: departmentIds.get(department) ?? null,
+      name,
+      price: 0
+    })),
     skipDuplicates: true
   })
 }
