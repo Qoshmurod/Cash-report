@@ -6,7 +6,7 @@ export default defineEventHandler(async (event) => {
   const now = new Date()
   const start = new Date(now.getFullYear(), now.getMonth(), now.getDate())
   const [payments, patients, doctors, services, appointments] = await Promise.all([
-    prisma.payment.aggregate({ where: { createdAt: { gte: start } }, _sum: { amount: true }, _count: { _all: true } }),
+    prisma.payment.aggregate({ where: { deletedAt: null, createdAt: { gte: start } }, _sum: { amount: true }, _count: { _all: true } }),
     prisma.patient.count(),
     prisma.doctor.count({ where: { active: true } }),
     prisma.service.count({ where: { active: true } }),

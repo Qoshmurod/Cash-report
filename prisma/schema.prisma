@@ -28,6 +28,7 @@ model Payment {
   id         Int      @id @default(autoincrement())
   patientId  Int
   department String
+  departmentId Int?
   service    String?
   amount     Int
   note       String?
@@ -38,12 +39,19 @@ model Payment {
   serviceRef Service? @relation(fields: [serviceId], references: [id], onDelete: SetNull)
   doctorId   Int?
   doctor     Doctor? @relation(fields: [doctorId], references: [id], onDelete: SetNull)
+  cashierId  Int?
+  cashier    User? @relation("CashierPayments", fields: [cashierId], references: [id], onDelete: SetNull)
+  departmentRef Department? @relation(fields: [departmentId], references: [id], onDelete: SetNull)
+  deletedAt DateTime?
   paymentServices PaymentService[]
 
   @@index([createdAt])
   @@index([department])
   @@index([patientId])
   @@index([doctorId])
+  @@index([departmentId])
+  @@index([cashierId])
+  @@index([deletedAt])
 }
 
 enum PaymentMethod {
@@ -75,6 +83,8 @@ model Service {
   id           Int       @id @default(autoincrement())
   name         String
   department   String?
+  departmentId Int?
+  departmentRef Department? @relation(fields: [departmentId], references: [id], onDelete: SetNull)
   price        Int
   active       Boolean  @default(true)
   createdAt    DateTime @default(now())
@@ -83,6 +93,19 @@ model Service {
   paymentSelections PaymentService[]
   @@unique([name, department])
   @@index([name])
+  @@index([departmentId])
+}
+
+model Department {
+  id        Int       @id @default(autoincrement())
+  code      String    @unique
+  name      String
+  active    Boolean   @default(true)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  services  Service[]
+  payments  Payment[]
+  @@index([active])
 }
 
 model PaymentService {
@@ -132,8 +155,41 @@ model User {
   permissions          UserPermission[]
   doctorId             Int?      @unique
   doctor               Doctor?  @relation(fields: [doctorId], references: [id], onDelete: SetNull)
+  paymentsCreated      Payment[] @relation("CashierPayments")
+  auditLogs             AuditLog[]
+  loginHistory          LoginHistory[]
 
   @@index([role])
+}
+
+model AuditLog {
+  id         Int      @id @default(autoincrement())
+  userId     Int?
+  action     String
+  entity     String
+  entityId   String?
+  previous   String?
+  next       String?
+  ipAddress  String?
+  createdAt  DateTime @default(now())
+  user       User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  @@index([entity, entityId])
+  @@index([createdAt])
+}
+
+model LoginHistory {
+  id          Int      @id @default(autoincrement())
+  userId      Int?
+  username    String
+  role        UserRole?
+  loginAt     DateTime @default(now())
+  logoutAt    DateTime?
+  ipAddress   String?
+  userAgent   String?
+  success     Boolean
+  user        User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  @@index([loginAt])
+  @@index([username])
 }
 
 model Permission {

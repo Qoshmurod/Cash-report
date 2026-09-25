@@ -15,7 +15,7 @@ function periodStart(date: Date, days: number) {
 
 async function totals(from: Date, doctorId?: number | null) {
   const result = await prisma.payment.aggregate({
-    where: { createdAt: { gte: from }, ...(doctorId ? { doctorId } : {}) },
+    where: { deletedAt: null, createdAt: { gte: from }, ...(doctorId ? { doctorId } : {}) },
     _sum: { amount: true },
     _count: { _all: true }
   })

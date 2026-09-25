@@ -16,6 +16,16 @@ export default defineEventHandler(async (event) => {
   const user = await prisma.user.findUnique({ where: { username } })
   const valid = user && !user.disabled && await verifyPassword(password, user.passwordHash)
   if (!valid) {
+    await prisma.loginHistory.create({
+      data: {
+        userId: user?.id,
+        username,
+        role: user?.role,
+        ipAddress: ip,
+        userAgent: getHeader(event, 'user-agent') || null,
+        success: false
+      }
+    })
     const next = current && current.resetAt > Date.now() ? current : { count: 0, resetAt: Date.now() + 15 * 60 * 1000 }
     next.count++
     attempts.set(key, next)

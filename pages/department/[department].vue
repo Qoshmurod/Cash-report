@@ -1,18 +1,16 @@
 <script setup lang="ts">
 const route = useRoute()
 const department = computed(() => String(route.params.department || '').toUpperCase())
-const labels: Record<string, string> = {
-  BAKTERIOLOGIYA: 'Bakteriologiya',
-  PARAZITOLOGIYA: 'Parazitologiya',
-  VIRUSOLOGIYA: 'Virusologiya',
-  SAN_MINIMUM: 'San. Minimum'
-}
 const { data, refresh } = await useFetch('/api/payments', {
   query: computed(() => ({ department: department.value })),
   server: false
 })
+const { data: departmentsData } = await useFetch('/api/departments', { server: false })
 const payments = computed(() => (data.value as any)?.payments || [])
-const label = computed(() => labels[department.value] || department.value)
+const label = computed(() => {
+  const item = (departmentsData.value as any)?.departments?.find((entry: any) => entry.code === department.value)
+  return item?.name || department.value
+})
 const services = (payment: any) => payment.paymentServices?.map((item: any) => item.service.name).join(', ') || payment.service || '—'
 function formatDate(value: string) {
   return new Date(value).toLocaleString('uz-UZ')

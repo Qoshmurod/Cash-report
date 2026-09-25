@@ -1,5 +1,6 @@
 import { prisma } from '../../utils/prisma'
 import { hashPassword, passwordFingerprint, requireAuth, verifyPassword } from '../../utils/auth'
+import { recordAudit } from '../../utils/audit'
 
 export default defineEventHandler(async (event) => {
   const user = await requireAuth(event)
@@ -14,5 +15,6 @@ export default defineEventHandler(async (event) => {
     where: { id: user.id },
     data: { passwordHash: await hashPassword(next), passwordFingerprint: passwordFingerprint(next), mustChangePassword: false }
   })
+  await recordAudit(event, user, { action: 'CHANGE_PASSWORD', entity: 'User', entityId: user.id })
   return { ok: true }
 })

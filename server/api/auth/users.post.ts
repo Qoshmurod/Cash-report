@@ -1,8 +1,8 @@
 import { prisma } from '../../utils/prisma'
-import { hashPassword, passwordFingerprint, requireAuth } from '../../utils/auth'
+import { hashPassword, passwordFingerprint, requirePermission } from '../../utils/auth'
 
 export default defineEventHandler(async (event) => {
-  await requireAuth(event, ['SUPER_ADMIN'])
+  await requirePermission(event, 'USERS_CREATE')
   const body = await readBody(event)
   const username = String(body?.username || '').trim().toLowerCase()
   const password = String(body?.password || '')
