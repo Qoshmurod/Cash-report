@@ -2,6 +2,12 @@
 
 Nuxt 3 clinic cashier and patient-management app backed by Prisma and PostgreSQL (Supabase).
 
+The primary `/` entry now serves the supplied standalone **LabMed** interface from
+`public/labmed.html`. It is a client-side dashboard with its own localStorage demo
+data and XLSX export. The existing Nuxt pages and Prisma APIs remain available at
+their direct routes for the server-backed clinic workflow and can be restored as
+the primary entry without deleting that implementation.
+
 ## Run locally
 
 1. Install Node.js 20 or newer.
