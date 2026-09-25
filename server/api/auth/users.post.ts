@@ -1,9 +1,8 @@
 import { prisma } from '../../utils/prisma'
-import { hashPassword, passwordFingerprint, requireAuth } from '../../utils/auth'
-import { recordAudit } from '../../utils/audit'
+import { hashPassword, passwordFingerprint, requirePermission } from '../../utils/auth'
 
 export default defineEventHandler(async (event) => {
-  const actor = await requireAuth(event, ['SUPER_ADMIN'])
+  await requirePermission(event, 'USERS_CREATE')
   const body = await readBody(event)
   const username = String(body?.username || '').trim().toLowerCase()
   const password = String(body?.password || '')
@@ -15,7 +14,6 @@ export default defineEventHandler(async (event) => {
       data: { username, passwordHash, passwordFingerprint: passwordFingerprint(password), role, mustChangePassword: true },
       select: { id: true, username: true, role: true, mustChangePassword: true }
     })
-    await recordAudit(event, actor, { action: 'CREATE', entity: 'User', entityId: user.id, details: { username, role } })
     return { user }
   } catch (error: any) {
     if (error?.code === 'P2002') throw createError({ statusCode: 409, statusMessage: 'Bu login allaqachon ishlatilgan' })

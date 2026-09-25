@@ -1,8 +1,7 @@
 import type { H3Event } from 'h3'
 import { getRequestIP } from 'h3'
-import type { Prisma } from '@prisma/client'
-import { prisma } from './prisma'
 import type { AuthUser } from './auth'
+import { prisma } from './prisma'
 
 export async function recordAudit(
   event: H3Event,
@@ -11,7 +10,7 @@ export async function recordAudit(
     action: string
     entity: string
     entityId?: number | string | null
-    details?: Prisma.InputJsonObject
+    details?: Record<string, unknown>
   }
 ) {
   await prisma.auditLog.create({
@@ -20,7 +19,7 @@ export async function recordAudit(
       action: input.action,
       entity: input.entity,
       entityId: input.entityId == null ? null : String(input.entityId),
-      details: input.details,
+      next: input.details ? JSON.stringify(input.details) : null,
       ipAddress: getRequestIP(event, { xForwardedFor: true }) || null
     }
   })

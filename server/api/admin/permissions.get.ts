@@ -12,6 +12,11 @@ const catalog = [
   ['REPORTS_MONTHLY', 'Oylik hisobot'],
   ['REPORTS_YEARLY', 'Yillik hisobot'],
   ['REPORTS_EXPORT', 'Excel eksport']
+  ,['REPORTS_EDIT', 'Hisobotlarni tahrirlash']
+  ,['USERS_CREATE', 'Login foydalanuvchilarini yaratish']
+  ,['DATA_EDIT', 'Ma’lumotlarni tahrirlash']
+  ,['DATABASE_DATA_ADD', 'Bazaga yangi ma’lumot qo‘shish']
+  ,['LOGIN_HISTORY_VIEW', 'Kirish/chiqish tarixini ko‘rish']
   ,['PAYMENTS_VIEW', 'To‘lovlarni ko‘rish']
   ,['PAYMENTS_CREATE', 'To‘lov kiritish']
   ,['PATIENTS_NAME_EDIT', 'Bemor ism-familiyasini tahrirlash']

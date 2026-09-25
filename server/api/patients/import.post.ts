@@ -1,10 +1,11 @@
 import * as XLSX from 'xlsx'
 import { prisma } from '../../utils/prisma'
 import { requireAuth } from '../../utils/auth'
-import { recordAudit } from '../../utils/audit'
 
 export default defineEventHandler(async (event) => {
-  const user = await requireAuth(event, ['SUPER_ADMIN'])
+  await requireAuth(event, ['SUPER_ADMIN'])
+  const query = getQuery(event)
+  const action = String(query.action || '')
   const contentType = getHeader(event, 'content-type') || ''
   let sourceRows: unknown[] = []
 
@@ -35,6 +36,7 @@ export default defineEventHandler(async (event) => {
   const known = new Set(existing.map((item) => keyFor(item.fullName, item.phone, item.birthYear)))
   const seen = new Set<string>()
   const rows: Array<{ fullName: string; phone: string | null; birthYear: number | null; address: string | null }> = []
+  const errors: Array<{ row: number; message: string }> = []
   let skipped = 0
 
   for (const raw of sourceRows) {
@@ -49,6 +51,7 @@ export default defineEventHandler(async (event) => {
     const fullName = String(value(['ism', 'fam', 'name', 'fio', 'full_name']) || '').trim()
     if (!fullName) {
       skipped++
+      errors.push({ row: rows.length + skipped, message: 'Ism-familiya topilmadi' })
       continue
     }
     const phoneValue = value(['tel', 'phone', 'telefon'])
@@ -70,11 +73,9 @@ export default defineEventHandler(async (event) => {
     seen.add(key)
   }
 
+  if (action === 'preview') {
+    return { preview: rows.slice(0, 100), valid: rows.length, skipped, errors, total: sourceRows.length, requiresConfirmation: true }
+  }
   if (rows.length) await prisma.patient.createMany({ data: rows })
-  await recordAudit(event, user, {
-    action: 'IMPORT',
-    entity: 'Patient',
-    details: { added: rows.length, skipped, total: sourceRows.length }
-  })
-  return { added: rows.length, skipped, total: sourceRows.length }
+  return { added: rows.length, skipped, errors, total: sourceRows.length, confirmed: action === 'confirm' }
 })
