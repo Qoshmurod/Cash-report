@@ -7,9 +7,22 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-enum PaymentType { card contract pending }
-enum OrderStatus { pending completed }
-enum ServiceStatus { pending partial completed }
+enum PaymentType {
+  card
+  contract
+  pending
+}
+
+enum OrderStatus {
+  pending
+  completed
+}
+
+enum ServiceStatus {
+  pending
+  partial
+  completed
+}
 
 model Department {
   key       String @id
@@ -41,7 +54,7 @@ model Service {
   dept            Department @relation(fields: [deptKey], references: [key])
   items           OrderItem[]
   @@index([deptKey])
-  @@index([code])
+  @@unique([code])
 }
 
 model Role {

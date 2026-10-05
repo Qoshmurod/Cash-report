@@ -26,7 +26,7 @@ const departments = [
   ['sangig','Sangig','🧬']
 ];
 
-const services = [
+const services: [string, string, number, string][] = [
   ['BAK-01','Bakteriologik tekshiruv 01',87376,'bakteriologiya'],
   ['BAK-02','Bakteriologik tekshiruv 02',93881,'bakteriologiya'],
   ['BAK-03','Bakteriologik tekshiruv 03',50000,'bakteriologiya'],
