@@ -6,5 +6,5 @@ if [ ! -f .env ]; then
   exit 1
 fi
 docker compose up --build -d
-echo "Tayyor: http://localhost:8080"
+echo "Tayyor: http://localhost:8081"
 echo ".env faylidagi OWNER_LOGIN va OWNER_PASSWORD orqali kiring."

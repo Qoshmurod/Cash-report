@@ -46,13 +46,13 @@ docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build -d
 docker compose -f docker-compose.yml -f docker-compose.dev.yml ps
 ```
 
-Ilova `http://localhost:8080` manzilida ochiladi. Development override lokal HTTP sinovi uchun `APP_ENV=development` va `COOKIE_SECURE=false` qiymatlarini qo'llaydi. Kirish uchun `.env` faylidagi `OWNER_LOGIN` va `OWNER_PASSWORD` ishlatiladi; standart login/parol yo'q.
+Ilova `http://localhost:8081` manzilida ochiladi. Development override lokal HTTP sinovi uchun `APP_ENV=development` va `COOKIE_SECURE=false` qiymatlarini qo'llaydi. Kirish uchun `.env` faylidagi `OWNER_LOGIN` va `OWNER_PASSWORD` ishlatiladi; standart login/parol yo'q. Development override web, API va PostgreSQL uchun mos ravishda `3002`, `3001`, `5432` localhost portlarini beradi; native frontend preview ishlayotgan bo'lsa u `3000` portida qoladi.
 
 Ishga tushganini tekshirish:
 
 ```sh
 docker compose -f docker-compose.yml -f docker-compose.dev.yml ps
-curl http://localhost:8080/api/v1/health
+curl http://localhost:8081/api/v1/health
 ```
 
 `db`, `api`, `web` xizmatlari `healthy` holatida bo'lishi kerak; health endpoint `{ "ok": true, ... }` javobini qaytaradi. Windows PowerShell'da `curl` o'rniga `curl.exe` ishlating.
@@ -62,13 +62,25 @@ To'xtatish uchun ayni `-f` parametrlarini ko'rsatib `docker compose down` buyrug
 ## Production'ga joylash
 
 1. `.env` faylida kuchli va alohida maxfiy qiymatlar belgilang; `APP_ENV=production`, `COOKIE_SECURE=true` bo'lsin.
-2. HTTPS reverse proxy yoki tunnelni hostdagi `http://127.0.0.1:8080` manziliga ulang va tashqi kirish faqat HTTPS orqali bo'lishini ta'minlang. Compose porti faqat localhost’da tinglaydi. Session cookie `HttpOnly`, `SameSite=Lax`, `Secure` atributlariga ega.
+2. HTTPS reverse proxy yoki tunnelni hostdagi `http://127.0.0.1:8081` manziliga ulang va tashqi kirish faqat HTTPS orqali bo'lishini ta'minlang. Compose porti faqat localhost’da tinglaydi. Session cookie `HttpOnly`, `SameSite=Lax`, `Secure` atributlariga ega.
 3. `docker compose up --build -d` buyrug'ini ishga tushiring. `docker compose ps` orqali `db`, `api`, `web` xizmatlari `healthy` holatga kelganini tekshiring.
 4. Muammolarni `docker compose logs -f api` va `docker compose logs -f web` orqali ko'ring. Production Compose to'g'ridan-to'g'ri internetga ochilmaydi; HTTPS proxy yoki tunnelni hostda alohida sozlang.
 
 Kerakli qiymatlar yetishmasa, Compose ishga tushmaydi. API maxfiy kalit uzunligi, admin credential va production cookie sozlamalarini start paytida qayta tekshiradi. Ilova hozir faqat access JWT tokenidan foydalanadi. Prisma sxemasi migratsiya fayllari bilan emas, `prisma db push` orqali boshqariladi (`apps/api` ichida `npm run prisma:push` mavjud). API konteyneri ishga tushganda `db push` bajaradi, ammo `--accept-data-loss` berilmaydi; ma'lumotni o'chirishi mumkin bo'lgan sxema o'zgarishi avtomatik tasdiqlanmaydi. Har bir production yangilashdan oldin backup oling va `docker compose logs api` chiqishini tekshiring. DB push migration history yaratmaydi; versiyalangan Prisma migratsiyalariga o'tishda avval schema va amaldagi DB holatini solishtirib, alohida migration rejasini tayyorlang.
 
 Oldingi `admin` login/parol, database paroli yoki JWT maxfiy kalitlarini ishlatmang. `OWNER_NAME`, `OWNER_LOGIN`, `OWNER_PASSWORD` faqat yangi Super Admin yaratishda seed qilinadi. Database'da owner allaqachon mavjud bo'lsa, `.env` qiymatlarini o'zgartirish uning login/parolini almashtirmaydi yoki yangi owner yaratmaydi.
+
+### Docker'ni Windows + Ubuntu/WSL'da ishga tushirish
+
+Windows'da Docker CLI daemon'ga ulana olmasa, Docker Desktop'ni ochib **Settings → Resources → WSL Integration** bo'limida Ubuntu integratsiyasini yoqing. Ubuntu terminalida:
+
+```sh
+cd /mnt/c/Users/L.E.G.E.N.D.A/PycharmProjects/copilot-worktrees/Cash-report/qoshmurod-fluffy-umbrella
+docker version
+docker compose version
+```
+
+`docker version` Client va Server qismlarini ko'rsatgandan keyingina `.env`ni sozlab development Compose buyrug'ini ishga tushiring. Agar Ubuntu ichida Docker Engine allaqachon o'rnatilgan bo'lsa, Ubuntu admin huquqi bilan `sudo systemctl start docker` ishlatish mumkin. Boshqa xizmatlarni to'xtatish yoki `docker compose down -v` ishlatish shart emas.
 
 ## Asosiy imkoniyatlar
 

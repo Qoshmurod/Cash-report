@@ -19,6 +19,6 @@ if errorlevel 1 (
   exit /b 1
 )
 echo.
-echo Tayyor: http://localhost:8080
+echo Tayyor: http://localhost:8081
 echo Kirish uchun .env faylida belgilangan OWNER_LOGIN va OWNER_PASSWORD dan foydalaning.
 pause

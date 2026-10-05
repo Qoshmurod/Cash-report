@@ -10,4 +10,4 @@ services:
       COOKIE_SECURE: "false"
   web:
     ports:
-      - "127.0.0.1:3000:3000"
+      - "127.0.0.1:3002:3000"
