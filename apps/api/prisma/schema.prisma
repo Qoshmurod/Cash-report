@@ -1,0 +1,224 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum PaymentType { card contract pending }
+enum OrderStatus { pending completed }
+enum ServiceStatus { pending partial completed }
+
+model Department {
+  key       String @id
+  name      String
+  icon      String?
+  color     String?
+  isCustom  Boolean @default(false)
+  isActive  Boolean @default(true)
+  users     UserDepartment[]
+  services  Service[]
+  items     OrderItem[]
+}
+
+model Service {
+  id              String @id @default(uuid())
+  code            String
+  name            String
+  price           BigInt
+  basePrice       BigInt @default(0)
+  antibioticPrice BigInt @default(0)
+  isCombined      Boolean @default(false)
+  isCustom        Boolean @default(false)
+  deptKey         String
+  icon            String?
+  color           String?
+  isActive        Boolean @default(true)
+  createdAt       DateTime @default(now())
+  createdBy       String?
+  dept            Department @relation(fields: [deptKey], references: [key])
+  items           OrderItem[]
+  @@index([deptKey])
+  @@index([code])
+}
+
+model Role {
+  id          String @id @default(uuid())
+  name        String @unique
+  isSystem    Boolean @default(false)
+  isActive    Boolean @default(true)
+  users       User[]
+  permissions RolePermission[]
+}
+
+model Permission {
+  id       String @id
+  group    String
+  name     String
+  roles    RolePermission[]
+}
+
+model RolePermission {
+  roleId       String
+  permissionId String
+  role         Role @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permission  Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+  @@id([roleId, permissionId])
+}
+
+model User {
+  id           String @id @default(uuid())
+  name         String
+  login        String @unique
+  passwordHash String
+  roleId       String
+  isOwner      Boolean @default(false)
+  isActive     Boolean @default(true)
+  createdAt    DateTime @default(now())
+  role         Role @relation(fields: [roleId], references: [id])
+  departments  UserDepartment[]
+  orders       Order[] @relation("CashierOrders")
+  verified     Order[] @relation("Verifier")
+}
+
+model UserDepartment {
+  userId   String
+  deptKey  String
+  user     User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  dept     Department @relation(fields: [deptKey], references: [key])
+  @@id([userId, deptKey])
+}
+
+model Patient {
+  id           String @id @default(uuid())
+  lastName     String
+  firstName    String
+  middleName   String?
+  phone        String?
+  address      String?
+  workplace    String?
+  contractId   String?
+  notes        String?
+  autoCreated  Boolean @default(false)
+  createdAt    DateTime @default(now())
+  createdBy    String?
+  contract     Contract? @relation(fields: [contractId], references: [id])
+  orders       Order[]
+  @@index([phone])
+  @@index([contractId])
+}
+
+model Contract {
+  id          String @id @default(uuid())
+  contractNo  String @unique
+  total       BigInt
+  paid        BigInt
+  createdAt   DateTime @default(now())
+  patients    Patient[]
+  orders      Order[]
+  alert       ContractAlertState?
+}
+
+model ContractAlertState {
+  contractId  String @id
+  state       String
+  totalAtState BigInt
+  updatedAt   DateTime @updatedAt
+  contract    Contract @relation(fields: [contractId], references: [id], onDelete: Cascade)
+}
+
+model Order {
+  id              String @id @default(uuid())
+  displayId       Int @default(autoincrement())
+  patientId       String
+  contractId      String?
+  patientFullName String
+  firstName       String
+  lastName        String
+  middleName      String?
+  phone           String?
+  address         String?
+  workplace       String?
+  note            String?
+  total           BigInt
+  paymentType     PaymentType
+  status          OrderStatus @default(pending)
+  serviceStatus   ServiceStatus @default(pending)
+  cashierId       String?
+  createdAt       DateTime @default(now())
+  verifiedAt      DateTime?
+  verifiedBy      String?
+  patient         Patient @relation(fields: [patientId], references: [id])
+  contract        Contract? @relation(fields: [contractId], references: [id])
+  cashier         User? @relation("CashierOrders", fields: [cashierId], references: [id])
+  verifier        User? @relation("Verifier", fields: [verifiedBy], references: [id])
+  items           OrderItem[]
+  @@index([status, verifiedAt])
+  @@index([patientId])
+  @@index([contractId])
+}
+
+model OrderItem {
+  id            String @id @default(uuid())
+  orderId       String
+  serviceId     String?
+  code          String
+  name          String
+  deptKey       String
+  price         BigInt
+  qty           Int @default(1)
+  variant       String @default("std")
+  manualPrice   BigInt?
+  serviceStatus ServiceStatus @default(pending)
+  completedAt   DateTime?
+  completedBy   String?
+  order         Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  service       Service? @relation(fields: [serviceId], references: [id])
+  dept          Department @relation(fields: [deptKey], references: [key])
+  @@index([orderId, deptKey])
+}
+
+model RefreshSession {
+  id             String @id @default(uuid())
+  userId         String
+  tokenHash      String
+  ip             String?
+  userAgent      String?
+  lastActivityAt DateTime @default(now())
+  expiresAt      DateTime
+  revokedAt      DateTime?
+}
+
+model LoginAttempt {
+  loginKey    String @id
+  failCount   Int @default(0)
+  lockLevel   Int @default(0)
+  lockedUntil DateTime?
+  lastFailAt  DateTime?
+}
+
+model AuditLog {
+  id        String @id @default(uuid())
+  createdAt DateTime @default(now())
+  userId    String?
+  login     String?
+  action    String
+  entity    String
+  entityId  String?
+  oldValue  Json?
+  newValue  Json?
+  ip        String?
+}
+
+model LoginHistory {
+  id        String @id @default(uuid())
+  createdAt DateTime @default(now())
+  userId    String?
+  loginText String
+  roleName  String?
+  ip        String?
+  status    String
+  note      String?
+}

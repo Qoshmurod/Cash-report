@@ -1,0 +1,2 @@
+<template><div><h1>Xizmatlar</h1><div class="card"><table class="table"><thead><tr><th>Kod</th><th>Nomi</th><th>Bo‘lim</th><th>Narx</th></tr></thead><tbody><tr v-for="s in rows" :key="s.id"><td>{{s.code}}</td><td>{{s.name}}</td><td>{{s.deptKey}}</td><td>{{money(s.price)}} so‘m</td></tr></tbody></table></div></div></template>
+<script setup lang="ts">const {request}=useApi();const rows=ref<any[]>([]);const money=(n:number)=>new Intl.NumberFormat('uz-UZ').format(n);onMounted(async()=>rows.value=await request('/services'))</script>

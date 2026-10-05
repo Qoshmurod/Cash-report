@@ -1,8 +1,21 @@
-node_modules
-.nuxt
-.output
+# Dependencies and generated build output
+node_modules/
+apps/*/node_modules/
+apps/*/dist/
+apps/web/.nuxt/
+apps/web/.output/
+
+# Local configuration and credentials
 .env
 .env.*
 !.env.example
+
+# Local database and backup files
 *.db
 *.db-journal
+backup*.sql
+backup*.sql.gz
+
+# Operating system files
+Thumbs.db
+.DS_Store

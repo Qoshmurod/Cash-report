@@ -1,37 +1,64 @@
-# Klinika Kassasi
+# Clinika / LabMed — ishga tayyor versiya
 
-Nuxt 3 clinic cashier and patient-management app backed by Prisma and PostgreSQL (Supabase).
+Bu loyiha oddiy HTML emas. Nuxt 3 + NestJS + PostgreSQL + Prisma asosidagi to‘liq web-ilova.
 
-## Run locally
+## Ishga tushirish
 
-1. Install Node.js 20 or newer.
-2. Copy `.env.example` to `.env` and replace both Supabase connection-string placeholders.
-3. Install dependencies with `npm install` (this runs `prisma generate`).
-4. Apply the schema with `npm run prisma:push`.
-5. Start the UI with `npm run dev`.
+1. Windows 11/Ubuntu serverga Docker Desktop yoki Docker Engine o‘rnating.
+2. ZIP ni oching.
+3. Loyiha papkasida terminal oching.
+4. `docker compose up --build -d` buyrug‘ini bajaring.
+5. Brauzerda `http://localhost` ni oching.
+6. Birinchi kirish: **admin / Admin123!**
 
-The server API uses Prisma for patient and payment CRUD, search, import, filtering, deletion, statistics, and permission-protected Excel reports. Authentication uses database-backed sessions, scrypt password hashing, an opaque HttpOnly cookie, login throttling, and server-side role checks. Passwords are never stored in plain text; a keyed fingerprint is used only to reject duplicate passwords without making them recoverable.
+Birinchi kirishdan keyin admin parolini albatta almashtiring.
 
-Super admins can import patient data from the **Bemorlar** page using `.xlsx`, `.xls`, `.csv`, or `.txt` files. The first worksheet is read automatically; columns containing `ism`, `familiya`, `name`, `telefon`, `phone`, `tugilgan yili`, `year`, `manzil`, or `address` are recognized. Rows without a name and duplicate name/phone pairs are skipped, and the import response reports added and skipped rows. The upload is server-side validated and is available only to `SUPER_ADMIN`.
+## Tayyor funksiyalar
 
-The interface includes a language selector for Uzbek, English, and Russian. Patient duplicate detection uses the complete identity tuple: normalized full name, phone number, and birth year. Passwords may be reused by different users; they remain scrypt-hashed, and changing credentials always requires the current password.
+- Login/logout va rollarga asoslangan ruxsatlar
+- Super Admin, Rahbar, Buxgalter, Kassir, Mutaxassis
+- Bosh sahifa dashboard
+- Kassa va xizmat savati
+- Plastik/karta, shartnoma va “To‘lov jarayonda”
+- Kunni yopish
+- Xizmat ko‘rsatish va bo‘lim bo‘yicha huquqlar
+- Bemor/mijoz qo‘shish va tahrirlash
+- Shartnoma, to‘langan/qoldiq summa va 10% ogohlantirish
+- Xizmatlar CRUD, bo‘limlar CRUD
+- Xodimlar CRUD va bo‘lim biriktirish
+- Audit jurnali
+- Kunlik/davr bo‘yicha hisobot
+- To‘lov turi bo‘yicha hisobot
+- Excel eksport
+- Excel orqali xizmatlar importi
+- PostgreSQL doimiy volume
+- Nginx reverse proxy
+- Docker Compose
 
-Clinic workflow modules now include reception/queue statuses (`WAITING`, `IN_PROGRESS`, `COMPLETED`, `CANCELLED`), doctors, services, appointment history, payment methods (`CASH`, `CARD`, `TRANSFER`), and a super-admin permission matrix. The `/reception` page manages the queue, while `/admin` lets the super admin assign permissions in a Telegram-style matrix. The cashier can select one or more seeded laboratory analyses during payment; each payment keeps those selections in the database. Department workstations can open `/department/BAKTERIOLOGIYA`, `/department/PARAZITOLOGIYA`, `/department/VIRUSOLOGIYA`, or `/department/SAN_MINIMUM` to see only patients routed to that department and their analyses. Apply the additive schema with `npx prisma db push` before first use of these modules.
+## Excel import formati
 
-There is no hardcoded or displayed default super-admin credential. After `prisma:push`, set unique random `NUXT_SESSION_SECRET`, `BOOTSTRAP_ADMIN_TOKEN`, `BOOTSTRAP_ADMIN_USERNAME`, and `BOOTSTRAP_ADMIN_PASSWORD` values, then call `POST /api/auth/bootstrap` once with `x-bootstrap-token` and the chosen credentials to create the only `SUPER_ADMIN`; the endpoint is permanently closed once any user exists. Admin password resets are performed only by the super admin and force a change on next login. The `PATIENTS_NAME_EDIT` permission should be granted only to cashier/operator accounts (super admin always bypasses permission checks). Export reports with `GET /api/reports/payments?from=YYYY-MM-DD&to=YYYY-MM-DD` (ADMIN or SUPER_ADMIN).
+Birinchi sheetda quyidagi ustunlar bo‘lishi kerak:
 
-## Deploy to Vercel
+`code | name | deptKey | price`
 
-1. Push this branch to GitHub and import the repository in Vercel.
-2. Keep the detected framework as **Nuxt.js**. The checked-in `vercel.json` uses `npm install` and `npm run build`.
-3. Deploy without committing `.env`; add `DATABASE_URL`, `DIRECT_URL`, and `NUXT_SESSION_SECRET` in Vercel's project settings.
-4. Run `npm run prisma:push` locally against the Supabase database before using the deployed app (or apply the equivalent reviewed migration).
+Masalan:
 
-`DATABASE_URL` should use Supabase's pooled connection string on port `6543` with `?pgbouncer=true`; `DIRECT_URL` should use the direct database connection on port `5432` for Prisma schema operations. Never put either credential in source control.
+`BAK-01 | Staphylococcus aureus tekshiruvi | bakteriologiya | 87376`
 
-Validation commands:
+## Serverga o‘rnatish
 
-```sh
-npm run typecheck
-npm run build
-```
+Ubuntu serverda Docker Engine o‘rnating, loyihani serverga ko‘chiring va `docker compose up --build -d` ni ishga tushiring. Keyin domenni Nginx/Cloudflare orqali ulash mumkin.
+
+## Backup
+
+PostgreSQL backup:
+
+`docker compose exec -T db pg_dump -U clinika -d clinika > backup.sql`
+
+Restore:
+
+`cat backup.sql | docker compose exec -T db psql -U clinika -d clinika`
+
+## Muhim
+
+Production uchun `.env` ichidagi JWT secret va DB parolini o‘zgartiring, HTTPS yoqing va muntazam backup qiling.

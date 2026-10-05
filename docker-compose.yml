@@ -1,0 +1,58 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: clinika
+      POSTGRES_PASSWORD: clinika_password
+      POSTGRES_DB: clinika
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U clinika -d clinika"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  api:
+    build: ./apps/api
+    environment:
+      DATABASE_URL: postgresql://clinika:clinika_password@db:5432/clinika?schema=public
+      JWT_ACCESS_SECRET: change-this-access-secret
+      JWT_REFRESH_SECRET: change-this-refresh-secret
+      OWNER_NAME: Super Admin
+      OWNER_LOGIN: admin
+      OWNER_PASSWORD: Admin123!
+      PORT: 3001
+      TZ_BUSINESS: Asia/Tashkent
+      COOKIE_SECURE: "false"
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:3001/api/v1/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  web:
+    build: ./apps/web
+    environment:
+      NUXT_PUBLIC_API_BASE: /api/v1
+    depends_on:
+      api:
+        condition: service_healthy
+
+  proxy:
+    image: nginx:alpine
+    volumes:
+      - ./docker/nginx.conf:/etc/nginx/nginx.conf:ro
+    ports:
+      - "80:80"
+    depends_on:
+      web:
+        condition: service_started
+      api:
+        condition: service_healthy
+
+volumes:
+  pgdata:
