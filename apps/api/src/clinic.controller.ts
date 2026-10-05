@@ -30,7 +30,10 @@ export class ClinicController {
   }
 
   @Get('health')
-  health() { return { ok: true, service: 'clinika-api', time: new Date().toISOString() }; }
+  async health() {
+    await this.prisma.$queryRaw`SELECT 1`;
+    return { ok: true, service: 'clinika-api', time: new Date().toISOString() };
+  }
 
   @Get('me')
   async current(@Req() req: any) {
@@ -224,4 +227,3 @@ export class ClinicController {
   @Get('audit')
   async auditLogs(@Query('limit') limit='100',@Req() req:any){await this.allow(req,'audit_access');return this.prisma.auditLog.findMany({orderBy:{createdAt:'desc'},take:Math.min(500,Math.max(1,Number(limit)||100))});}
 }
-

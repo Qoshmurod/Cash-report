@@ -1,64 +1,105 @@
-# Clinika / LabMed — ishga tayyor versiya
+# Clinika / LabMed
 
-Bu loyiha oddiy HTML emas. Nuxt 3 + NestJS + PostgreSQL + Prisma asosidagi to‘liq web-ilova.
+Clinika LabMed — Nuxt 3, NestJS, Prisma va PostgreSQL asosidagi Docker Compose ilovasi.
 
-## Ishga tushirish
+## Talablar
 
-1. Windows 11/Ubuntu serverga Docker Desktop yoki Docker Engine o‘rnating.
-2. ZIP ni oching.
-3. Loyiha papkasida terminal oching.
-4. `docker compose up --build -d` buyrug‘ini bajaring.
-5. Brauzerda `http://localhost` ni oching.
-6. Birinchi kirish: **admin / Admin123!**
+- Docker Engine yoki Docker Desktop va Docker Compose v2
+- Production uchun HTTPS reverse proxy yoki HTTPS tunnel
 
-Birinchi kirishdan keyin admin parolini albatta almashtiring.
+## Birinchi sozlash
 
-## Tayyor funksiyalar
+`.env.example` faylidan `.env` nusxa yarating va maxfiy qiymatlarni o'zingiznikiga almashtiring. PowerShell'da `Copy-Item .env.example .env`, Linux/macOS'da `cp .env.example .env` buyrug'ini ishlating. `.env` faylini Git'ga qo'shmang.
 
-- Login/logout va rollarga asoslangan ruxsatlar
-- Super Admin, Rahbar, Buxgalter, Kassir, Mutaxassis
-- Bosh sahifa dashboard
-- Kassa va xizmat savati
-- Plastik/karta, shartnoma va “To‘lov jarayonda”
-- Kunni yopish
-- Xizmat ko‘rsatish va bo‘lim bo‘yicha huquqlar
-- Bemor/mijoz qo‘shish va tahrirlash
-- Shartnoma, to‘langan/qoldiq summa va 10% ogohlantirish
-- Xizmatlar CRUD, bo‘limlar CRUD
-- Xodimlar CRUD va bo‘lim biriktirish
-- Audit jurnali
-- Kunlik/davr bo‘yicha hisobot
-- To‘lov turi bo‘yicha hisobot
-- Excel eksport
-- Excel orqali xizmatlar importi
-- PostgreSQL doimiy volume
-- Nginx reverse proxy
-- Docker Compose
+PowerShell'da tasodifiy 32 baytli hex qiymat yaratish:
 
-## Excel import formati
+```powershell
+$rng = [Security.Cryptography.RandomNumberGenerator]::Create()
+$bytes = New-Object byte[] 32
+$rng.GetBytes($bytes)
+$rng.Dispose()
+[BitConverter]::ToString($bytes).Replace('-', '').ToLowerInvariant()
+```
 
-Birinchi sheetda quyidagi ustunlar bo‘lishi kerak:
+Bu buyruqni database paroli va JWT maxfiy kaliti uchun alohida ishlating. DB paroli URL uchun xavfsiz belgilar bilan kamida 24 ta, JWT maxfiy kaliti esa kamida 32 ta belgidan iborat bo'lsin. Super Admin parolini kamida 12 ta belgidan tanlang. Linux/macOS'da 32 baytli hex qiymat yaratish uchun `openssl rand -hex 32` buyrug'idan foydalaning.
+
+`.env` faylida quyidagi qiymatlarni kiriting:
+
+```dotenv
+POSTGRES_USER=clinika
+POSTGRES_PASSWORD=
+POSTGRES_DB=clinika
+JWT_ACCESS_SECRET=
+OWNER_NAME=Super Admin
+OWNER_LOGIN=
+OWNER_PASSWORD=
+APP_ENV=production
+COOKIE_SECURE=true
+```
+
+## Lokal sinov (HTTP)
+
+`.env` faylga maxfiy qiymatlarni kiritgandan so'ng:
+
+```sh
+docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build -d
+docker compose -f docker-compose.yml -f docker-compose.dev.yml ps
+```
+
+Ilova `http://localhost:8080` manzilida ochiladi. Development override lokal HTTP sinovi uchun `APP_ENV=development` va `COOKIE_SECURE=false` qiymatlarini qo'llaydi. Kirish uchun `.env` faylidagi `OWNER_LOGIN` va `OWNER_PASSWORD` ishlatiladi; standart login/parol yo'q.
+
+Ishga tushganini tekshirish:
+
+```sh
+docker compose -f docker-compose.yml -f docker-compose.dev.yml ps
+curl http://localhost:8080/api/v1/health
+```
+
+`db`, `api`, `web` xizmatlari `healthy` holatida bo'lishi kerak; health endpoint `{ "ok": true, ... }` javobini qaytaradi. Windows PowerShell'da `curl` o'rniga `curl.exe` ishlating.
+
+To'xtatish uchun ayni `-f` parametrlarini ko'rsatib `docker compose down` buyrug'ini bajaring. `docker compose down -v` database'dagi barcha saqlangan ma'lumotlarni o'chiradi; faqat ataylab tozalashda foydalaning.
+
+## Production'ga joylash
+
+1. `.env` faylida kuchli va alohida maxfiy qiymatlar belgilang; `APP_ENV=production`, `COOKIE_SECURE=true` bo'lsin.
+2. HTTPS reverse proxy yoki tunnelni hostdagi `http://127.0.0.1:8080` manziliga ulang va tashqi kirish faqat HTTPS orqali bo'lishini ta'minlang. Compose porti faqat localhost’da tinglaydi. Session cookie `HttpOnly`, `SameSite=Lax`, `Secure` atributlariga ega.
+3. `docker compose up --build -d` buyrug'ini ishga tushiring. `docker compose ps` orqali `db`, `api`, `web` xizmatlari `healthy` holatga kelganini tekshiring.
+4. Muammolarni `docker compose logs -f api` va `docker compose logs -f web` orqali ko'ring. Production Compose to'g'ridan-to'g'ri internetga ochilmaydi; HTTPS proxy yoki tunnelni hostda alohida sozlang.
+
+Kerakli qiymatlar yetishmasa, Compose ishga tushmaydi. API maxfiy kalit uzunligi, admin credential va production cookie sozlamalarini start paytida qayta tekshiradi. Ilova hozir faqat access JWT tokenidan foydalanadi. Prisma sxemasini yangilashda `db push` ishlatiladi, ammo `--accept-data-loss` berilmaydi; ma'lumotni o'chirishi mumkin bo'lgan sxema o'zgarishi avtomatik tasdiqlanmaydi.
+
+Oldingi `admin` login/parol, database paroli yoki JWT maxfiy kalitlarini ishlatmang. `OWNER_NAME`, `OWNER_LOGIN`, `OWNER_PASSWORD` faqat yangi Super Admin yaratishda seed qilinadi. Database'da owner allaqachon mavjud bo'lsa, `.env` qiymatlarini o'zgartirish uning login/parolini almashtirmaydi yoki yangi owner yaratmaydi.
+
+## Asosiy imkoniyatlar
+
+- Kirish/chiqish va rollarga asoslangan huquqlar: Super Admin, Rahbar, Buxgalter, Kassir, Mutaxassis
+- Boshqaruv paneli, kassa, to'lov turlari va kunni yopish
+- Xizmatlar, bo'limlar, bemor/mijozlar va xodimlarni boshqarish
+- Shartnoma to'lovlari, qoldiq summa va 10% ogohlantirishi
+- Audit jurnali, davr/to'lov turi bo'yicha hisobotlar
+- Excel eksporti va xizmatlarni Excel'dan import qilish
+- PostgreSQL saqlash joyi va Nginx reverse proxy
+
+### Excel importi
+
+Birinchi sheet quyidagi ustunlarga ega bo'lishi kerak:
 
 `code | name | deptKey | price`
 
-Masalan:
+Misol: `BAK-01 | Staphylococcus aureus tekshiruvi | bakteriologiya | 87376`
 
-`BAK-01 | Staphylococcus aureus tekshiruvi | bakteriologiya | 87376`
+## Zaxiralash va tiklash
 
-## Serverga o‘rnatish
+Linux/macOS/WSL terminalida zaxira nusxa olish:
 
-Ubuntu serverda Docker Engine o‘rnating, loyihani serverga ko‘chiring va `docker compose up --build -d` ni ishga tushiring. Keyin domenni Nginx/Cloudflare orqali ulash mumkin.
+```sh
+docker compose exec -T db sh -c 'pg_dump -U "$POSTGRES_USER" -d "$POSTGRES_DB"' > backup.sql
+```
 
-## Backup
+Tiklash (mavjud database ma'lumotlariga ta'sir qiladi):
 
-PostgreSQL backup:
+```sh
+docker compose exec -T db sh -c 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB"' < backup.sql
+```
 
-`docker compose exec -T db pg_dump -U clinika -d clinika > backup.sql`
-
-Restore:
-
-`cat backup.sql | docker compose exec -T db psql -U clinika -d clinika`
-
-## Muhim
-
-Production uchun `.env` ichidagi JWT secret va DB parolini o‘zgartiring, HTTPS yoqing va muntazam backup qiling.
+Windows'da backup yaratish uchun ilova ishlayotgan loyiha papkasidan `backup-windows.bat` faylini ishga tushiring. Skript database nomi va foydalanuvchisini konteynerdan oladi. Zaxira nusxani Git repository'dan tashqarida, kirish huquqi cheklangan joyda saqlang.

@@ -19,4 +19,4 @@ COPY --from=build /app/prisma ./prisma
 COPY package*.json ./
 RUN addgroup -S app && adduser -S app -G app
 USER app
-CMD ["sh", "-c", "npx prisma db push --accept-data-loss && npx tsx prisma/seed.ts && node dist/main.js"]
+CMD ["sh", "-c", "node -e \"require('./dist/config').validateEnvironment()\" && npx prisma db push && npx tsx prisma/seed.ts && node dist/main.js"]

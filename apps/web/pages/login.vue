@@ -13,6 +13,6 @@
 </template>
 <script setup lang="ts">
 definePageMeta({ layout: false })
-const auth=useAuthStore(); const login=ref('admin'); const password=ref('Admin123!'); const busy=ref(false); const error=ref('')
+const auth=useAuthStore(); const login=ref(''); const password=ref(''); const busy=ref(false); const error=ref('')
 async function submit(){busy.value=true;error.value='';try{await auth.login(login.value,password.value);await navigateTo('/')}catch(e:any){error.value='Login yoki parol noto‘g‘ri'}finally{busy.value=false}}
 </script>

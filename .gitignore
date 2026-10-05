@@ -15,6 +15,7 @@ apps/web/.output/
 *.db-journal
 backup*.sql
 backup*.sql.gz
+backups/
 
 # Operating system files
 Thumbs.db

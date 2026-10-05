@@ -1,5 +1,6 @@
 import { PrismaClient, PaymentType } from '@prisma/client';
 import * as argon2 from 'argon2';
+import { requiredEnv, validateEnvironment } from '../src/config';
 
 const prisma = new PrismaClient();
 
@@ -41,6 +42,7 @@ const services = [
 ];
 
 async function main() {
+  validateEnvironment();
   for (const [id, group, name] of permissions) {
     await prisma.permission.upsert({
       where: { id }, update: { group, name }, create: { id, group, name }
@@ -75,16 +77,19 @@ async function main() {
     });
   }
 
-  const login = (process.env.OWNER_LOGIN || 'admin').toLowerCase();
-  const password = process.env.OWNER_PASSWORD || 'Admin123!';
+  const login = requiredEnv('OWNER_LOGIN').toLowerCase();
+  const password = requiredEnv('OWNER_PASSWORD');
   const role = await prisma.role.findUniqueOrThrow({ where: { name: 'super_admin' } });
-  const existingOwner = await prisma.user.findUnique({ where: { login } });
+  const existingOwner = await prisma.user.findFirst({ where: { isOwner: true } });
   if (!existingOwner) {
     const hash = await argon2.hash(password);
-    await prisma.user.create({ data: { name: process.env.OWNER_NAME || 'Super Admin', login, passwordHash: hash, roleId: role.id, isOwner: true, isActive: true } });
-  } else {
-    await prisma.user.update({ where: { id: existingOwner.id }, data: { name: process.env.OWNER_NAME || existingOwner.name, roleId: role.id, isOwner: true, isActive: true } });
+    await prisma.user.create({ data: { name: requiredEnv('OWNER_NAME'), login, passwordHash: hash, roleId: role.id, isOwner: true, isActive: true } });
   }
 }
 
-main().finally(() => prisma.$disconnect());
+main()
+  .catch((error) => {
+    console.error('Database seed failed:', error);
+    process.exitCode = 1;
+  })
+  .finally(() => prisma.$disconnect());
