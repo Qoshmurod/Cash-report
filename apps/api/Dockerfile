@@ -20,4 +20,4 @@ COPY --from=build /app/src/config.ts ./src/config.ts
 COPY package*.json ./
 RUN addgroup -S app && adduser -S app -G app
 USER app
-CMD ["sh", "-c", "node -e \"require('./dist/src/config').validateEnvironment()\" && npx prisma db push && npx tsx prisma/seed.ts && node dist/src/main.js"]
+CMD ["sh", "-c", "node -e \"require('./dist/src/config').validateEnvironment()\" && npx prisma db push --skip-generate && npx tsx prisma/seed.ts && node dist/src/main.js"]
