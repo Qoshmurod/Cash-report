@@ -1,0 +1,41 @@
+# Production override:
+#   docker compose -f docker-compose.yml -f docker-compose.prod.yml --env-file .env.production up -d --build
+# - DB/Redis are NOT published to the host
+# - demo data disabled, seeded accounts must change password on first login (NODE_ENV=production)
+# - resource limits + log rotation
+x-logging: &logging
+  driver: json-file
+  options:
+    max-size: "20m"
+    max-file: "5"
+
+services:
+  postgres:
+    ports: !reset []
+    logging: *logging
+    deploy:
+      resources:
+        limits: { memory: 1g }
+
+  redis:
+    ports: !reset []
+    command: ["sh", "-c", "redis-server --appendonly yes $${REDIS_PASSWORD:+--requirepass $$REDIS_PASSWORD}"]
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-}
+    logging: *logging
+
+  backend:
+    environment:
+      NODE_ENV: production
+      SEED_DEMO_DATA: "false"
+      DATABASE_LOGGING: "false"
+    logging: *logging
+    deploy:
+      resources:
+        limits: { memory: 768m }
+
+  frontend:
+    logging: *logging
+    deploy:
+      resources:
+        limits: { memory: 384m }
