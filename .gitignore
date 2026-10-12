@@ -1,8 +1,11 @@
-node_modules
-.nuxt
-.output
-.env
-.env.*
-!.env.example
-*.db
-*.db-journal
+node_modules/
+dist/
+.output/
+.nuxt/
+.nitro/
+.cache/
+coverage/
+# .env
+.env.production
+*.log
+.DS_Store
