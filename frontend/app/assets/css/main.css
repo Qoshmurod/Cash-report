@@ -1,0 +1,81 @@
+@import "tailwindcss";
+@import "@nuxt/ui";
+
+@theme {
+  --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif;
+}
+
+:root {
+  --ui-radius: 0.5rem;
+}
+
+html, body {
+  @apply antialiased;
+}
+
+body {
+  background: var(--ui-bg);
+  color: var(--ui-text);
+}
+
+/* Tabular numbers for money / queue numbers */
+.tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Kiosk: disable text selection & tap highlight on touch screens */
+.kiosk-surface {
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+.kiosk-surface input,
+.kiosk-surface textarea {
+  -webkit-user-select: text;
+  user-select: text;
+}
+
+@keyframes ticket-pop {
+  0% { transform: scale(0.85); opacity: 0; }
+  60% { transform: scale(1.05); opacity: 1; }
+  100% { transform: scale(1); }
+}
+.animate-ticket-pop {
+  animation: ticket-pop 0.6s cubic-bezier(0.2, 0.9, 0.3, 1.2);
+}
+
+@keyframes ticket-flash {
+  0%, 100% { box-shadow: 0 0 0 0 rgb(20 184 166 / 0); }
+  50% { box-shadow: 0 0 0 18px rgb(20 184 166 / 0.35); }
+}
+.animate-ticket-flash {
+  animation: ticket-flash 1.2s ease-in-out 3;
+}
+
+/* Receipt printing: only the receipt is printed, sized for 80mm thermal paper */
+@media print {
+  @page {
+    size: 80mm auto;
+    margin: 0;
+  }
+  body * {
+    visibility: hidden !important;
+  }
+  .print-area,
+  .print-area * {
+    visibility: visible !important;
+  }
+  .print-area {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 80mm;
+    padding: 4mm;
+    color: #000 !important;
+    background: #fff !important;
+  }
+  .no-print {
+    display: none !important;
+  }
+}
