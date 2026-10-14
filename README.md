@@ -83,7 +83,7 @@ Keyin super admin bilan kiring → **Super admin** sahifasida rollarni yarating 
 
 ### Vercel / Supabase
 
-`vercel.json` build vaqtida `prisma db push` ni o‘zi bajaradi (faqat qo‘shimcha o‘zgarishlar; ma’lumot o‘chiriladigan bo‘lsa build to‘xtaydi). Vercel'da `DATABASE_URL`, `DIRECT_URL`, `NUXT_SESSION_SECRET` sozlangan bo‘lishi kifoya. Vercel so‘rov hajmi 4.5 MB bilan cheklangan, shuning uchun katta shartnoma fayllari uchun o‘z serveringiz yaxshiroq.
+`vercel.json` production deployda (`DIRECT_URL` sozlangan bo‘lsa) `prisma db push` ni o‘zi bajaradi; preview deploylar bazaga tegmaydi. Vercel'da `DATABASE_URL`, `DIRECT_URL`, `NUXT_SESSION_SECRET` sozlangan bo‘lishi kifoya. Vercel so‘rov hajmi 4.5 MB bilan cheklangan, shuning uchun katta shartnoma fayllari uchun o‘z serveringiz yaxshiroq.
 
 ## Texnik eslatmalar
 
