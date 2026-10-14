@@ -49,7 +49,7 @@ sudo bash deploy/install.sh kassa.example.uz siz@gmail.com
 
 Skript Docker, PostgreSQL, nginx (va domen berilsa HTTPS) ni o‘rnatadi, maxfiy kalitlarni avtomatik yaratadi, birinchi super adminni yaratib login/parolni ekranga chiqaradi (`/root/klinika-admin.txt` da ham saqlanadi). Qayta ishga tushirish xavfsiz.
 
-**Avtomatik yangilanish:** `install.sh` cron vazifasini qo‘shadi — har 5 daqiqada GitHub'dagi `main` tekshiriladi, yangi commit bo‘lsa dastur o‘zi qayta yig‘ilib ishga tushadi (ma’lumotlar saqlanadi, to‘xtash bir necha soniya). Log: `/var/log/klinika-update.log`. Qo‘lda yangilash: `sudo bash deploy/auto-update.sh`. O‘chirish: `sudo rm /etc/cron.d/klinika-auto-update`. Repo private bo‘lsa, serverda `git pull` parol so‘ramasligi uchun deploy key yoki token sozlang (pastga qarang). Zaxira nusxa: `sudo docker compose exec db pg_dump -U kassa kassa > backup.sql`.
+**Yangilanish:** `install.sh` yangilanish agentini o‘rnatadi. U har 5 daqiqada GitHub'dagi `main` ni tekshiradi; yangi versiya bo‘lsa, `SYSTEM_UPDATE` ruxsati bor xodimlarga (super admin doim) tizim tepasida sariq panel chiqadi. Yangi versiya **har kuni `UPDATE_TIME` da (standart 22:00, `.env` da o‘zgartiriladi)** yoki paneldagi **«Hozir yangilash»** tugmasi bosilganda o‘rnatiladi. Yig‘ish muvaffaqiyatsiz bo‘lsa, eski versiya ishlashda davom etadi va panelda ogohlantirish chiqadi. Log: `/var/log/klinika-update.log`. Qo‘lda: `sudo bash deploy/auto-update.sh apply`. O‘chirish: `sudo rm /etc/cron.d/klinika-auto-update`. Repo private bo‘lsa, token sozlang (pastga qarang).
 
 ### Qo‘lda: Docker
 
