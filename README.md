@@ -28,7 +28,7 @@ copy .env.demo .env          # Mac/Linux: cp .env.demo .env
 docker compose up -d --build
 ```
 
-3–8 daqiqadan keyin `http://localhost:3000` — login `admin`, parol `demo-parol-12345`. `.env.demo` faqat sinov uchun; serverda `deploy/install.sh` o‘z maxfiy kalitlarini yaratadi.
+3–8 daqiqadan keyin `http://localhost:3000` — login `admin01`, parol `admin01`. `.env.demo` faqat sinov uchun; serverda `deploy/install.sh` o‘z maxfiy kalitlarini yaratadi.
 
 ## Serverga o‘rnatish
 

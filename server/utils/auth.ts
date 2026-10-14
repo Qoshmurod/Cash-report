@@ -34,8 +34,8 @@ function secret() {
   return value
 }
 
-export async function hashPassword(password: string) {
-  if (password.length < 12) throw createError({ statusCode: 400, statusMessage: 'Parol kamida 12 belgidan iborat bo‘lsin' })
+export async function hashPassword(password: string, minLength = 12) {
+  if (password.length < minLength) throw createError({ statusCode: 400, statusMessage: 'Parol kamida 12 belgidan iborat bo‘lsin' })
   const salt = randomBytes(16)
   const derived = await scrypt(password, salt, 64) as Buffer
   return `scrypt$${salt.toString('base64')}$${derived.toString('base64')}`

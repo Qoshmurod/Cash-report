@@ -27,7 +27,7 @@ export default defineNitroPlugin(() => {
       const password = String(process.env.BOOTSTRAP_ADMIN_PASSWORD || '')
       if (process.env.AUTO_CREATE_ADMIN === 'true' && username && password && await prisma.user.count() === 0) {
         await prisma.user.create({
-          data: { username, passwordHash: await hashPassword(password), passwordFingerprint: passwordFingerprint(password), role: 'SUPER_ADMIN' }
+          data: { username, passwordHash: await hashPassword(password, 1), passwordFingerprint: passwordFingerprint(password), role: 'SUPER_ADMIN' }
         })
         console.log(`Demo super admin created: ${username}`)
       }
