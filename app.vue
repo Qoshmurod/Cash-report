@@ -1,88 +1,99 @@
 <script setup lang="ts">
 const route = useRoute()
 const { language, t, languages } = useI18n()
-const user = ref<{ username?: string } | null>(null)
+const { user, refresh, navItems } = useAuth()
+const contact = ref<Record<string, string>>({})
 const showProfile = ref(false)
 const profile = reactive({ username: '', currentPassword: '', newPassword: '' })
 const profileError = ref('')
-const profileSaved = ref(false)
 
-async function loadUser() {
+async function loadContact() {
   try {
-    const result: any = await $fetch('/api/auth/me')
-    user.value = result.user
-    profile.username = result.user.username
+    contact.value = (await $fetch<{ contact: Record<string, string> }>('/api/settings/contact')).contact
   } catch {
-    user.value = null
+    contact.value = {}
   }
+}
+
+function openProfile() {
+  profile.username = user.value?.username || ''
+  profileError.value = ''
+  showProfile.value = true
 }
 
 async function updateProfile() {
   profileError.value = ''
-  profileSaved.value = false
   try {
     await $fetch('/api/auth/profile', { method: 'POST', body: profile })
-    profileSaved.value = true
     profile.currentPassword = ''
     profile.newPassword = ''
     showProfile.value = false
-    await loadUser()
+    await refresh()
   } catch (error: any) {
-    profileError.value = error.data?.statusMessage || 'Profilni saqlab bo‘lmadi'
+    profileError.value = apiError(error, 'Profilni saqlab bo‘lmadi')
   }
 }
 
 async function logout() {
   await $fetch('/api/auth/logout', { method: 'POST' })
+  user.value = null
   await navigateTo('/', { replace: true })
 }
 
-onMounted(loadUser)
+const telegramLink = computed(() => {
+  const value = contact.value.telegram?.trim()
+  if (!value) return ''
+  return value.startsWith('http') ? value : `https://t.me/${value.replace(/^@/, '')}`
+})
+const instagramLink = computed(() => {
+  const value = contact.value.instagram?.trim()
+  if (!value) return ''
+  return value.startsWith('http') ? value : `https://instagram.com/${value.replace(/^@/, '')}`
+})
+const hasContact = computed(() => Boolean(contact.value.telegram || contact.value.instagram || contact.value.phone || contact.value.text))
+
+watch(() => user.value?.mustChangePassword, (value) => { if (value) openProfile() })
+provide('reloadContact', loadContact)
+onMounted(loadContact)
 </script>
 
 <template>
   <div class="app-shell">
-    <header class="topbar">
-      <NuxtLink to="/kassa" class="brand">🏥 {{ t('clinic') }}</NuxtLink>
+    <div v-if="hasContact" class="contact-bar">
+      <span v-if="contact.text">{{ contact.text }}</span>
+      <a v-if="contact.phone" :href="`tel:${contact.phone.replace(/[^\d+]/g, '')}`">📞 {{ contact.phone }}</a>
+      <a v-if="telegramLink" :href="telegramLink" target="_blank" rel="noopener">✈️ Telegram: {{ contact.telegram }}</a>
+      <a v-if="instagramLink" :href="instagramLink" target="_blank" rel="noopener">📷 Instagram: {{ contact.instagram }}</a>
+    </div>
+    <header v-if="user && route.path !== '/'" class="topbar">
+      <NuxtLink :to="navItems[0]?.to || '/'" class="brand">🏥 {{ t('clinic') }}</NuxtLink>
       <nav class="nav">
-        <NuxtLink to="/kassa" :class="{ active: route.path === '/kassa' }">💰 {{ t('cash') }}</NuxtLink>
-        <NuxtLink to="/patients" :class="{ active: route.path === '/patients' }">👥 {{ t('patients') }}</NuxtLink>
-        <NuxtLink to="/reception" :class="{ active: route.path === '/reception' }">📋 Qabul</NuxtLink>
-        <NuxtLink to="/admin" :class="{ active: route.path === '/admin' }">⚙️ Admin</NuxtLink>
+        <NuxtLink v-for="item in navItems" :key="item.to" :to="item.to" :class="{ active: item.to === '/admin' ? route.path === '/admin' : route.path.startsWith(item.to) }">{{ item.icon }} {{ t(item.key) }}</NuxtLink>
+      </nav>
+      <div class="nav-user">
         <select v-model="language" class="language-select" aria-label="Language">
           <option v-for="item in languages" :key="item.value" :value="item.value">{{ item.label }}</option>
         </select>
-        <button class="nav-profile" @click="showProfile = true">⚙️ {{ user?.username }}</button>
+        <button class="nav-profile" @click="openProfile">⚙️ {{ user.fullName || user.username }}<small v-if="user.roleName"> · {{ user.roleName }}</small></button>
         <button class="nav-logout" @click="logout">{{ t('logout') }}</button>
-      </nav>
+      </div>
     </header>
-    <main class="content">
+    <main :class="{ content: route.path !== '/' }">
       <NuxtPage />
     </main>
-    <div v-if="showProfile" class="profile-overlay" @click.self="showProfile = false">
-      <form class="profile-modal" @submit.prevent="updateProfile">
+    <div v-if="showProfile" class="modal-overlay" @click.self="!user?.mustChangePassword && (showProfile = false)">
+      <form class="modal" @submit.prevent="updateProfile">
         <h2>Profil va login</h2>
-        <label>Yangi login<input v-model="profile.username" autocomplete="username" required /></label>
-        <label>Joriy parol<input v-model="profile.currentPassword" type="password" autocomplete="current-password" required /></label>
-        <label>Yangi parol<input v-model="profile.newPassword" type="password" minlength="12" autocomplete="new-password" required /></label>
-        <p class="profile-hint">Yangi parol kamida 12 belgidan iborat bo‘lsin.</p>
-        <p v-if="profileError" class="profile-error">{{ profileError }}</p>
-        <div class="profile-actions">
-          <button type="button" class="btn secondary" @click="showProfile = false">Bekor qilish</button>
+        <p v-if="user?.mustChangePassword" class="error">Davom etish uchun parolni almashtiring.</p>
+        <div class="field"><label>Yangi login</label><input v-model="profile.username" autocomplete="username" required /></div>
+        <div class="field"><label>Joriy parol</label><input v-model="profile.currentPassword" type="password" autocomplete="current-password" required /></div>
+        <div class="field"><label>Yangi parol (kamida 12 belgi)</label><input v-model="profile.newPassword" type="password" minlength="12" autocomplete="new-password" required /></div>
+        <p v-if="profileError" class="error">{{ profileError }}</p>
+        <div class="modal-actions">
+          <button v-if="!user?.mustChangePassword" type="button" class="btn secondary" @click="showProfile = false">Bekor qilish</button>
           <button class="btn" type="submit">Saqlash</button>
         </div>
       </form>
     </div>
   </div>
 </template>
-
-<style scoped>
-.nav-profile { border: 0; background: transparent; color: inherit; cursor: pointer; }
-.profile-overlay { position: fixed; inset: 0; z-index: 100; display: grid; place-items: center; padding: 20px; background: rgba(0,0,0,.5); }
-.profile-modal { width: min(100%, 440px); padding: 24px; border-radius: 14px; background: white; }
-.profile-modal label { display: grid; gap: 6px; margin: 14px 0; font-weight: 600; }
-.profile-modal input { padding: 10px; border: 1px solid #d1d5db; border-radius: 8px; font: inherit; }
-.profile-hint { color: #6b7280; font-size: .9rem; }
-.profile-error { color: #b91c1c; }
-.profile-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 18px; }
-</style>

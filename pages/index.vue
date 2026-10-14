@@ -4,13 +4,15 @@ const password = ref('')
 const error = ref('')
 const loading = ref(false)
 const { t, language, languages } = useI18n()
+const { refresh, navItems } = useAuth()
 
 async function login() {
   error.value = ''
   loading.value = true
   try {
     await $fetch('/api/auth/login', { method: 'POST', body: { username: username.value, password: password.value } })
-    await navigateTo('/kassa', { replace: true })
+    await refresh()
+    await navigateTo(navItems.value[0]?.to || '/', { replace: true })
   } catch (e: any) {
     error.value = e.data?.statusMessage || 'Kirish amalga oshmadi'
   } finally {
@@ -36,7 +38,7 @@ async function login() {
 </template>
 
 <style scoped>
-.login-page { min-height: 100vh; display: grid; place-items: center; padding: 24px; background: #f0fdfa; }
+.login-page { min-height: 90vh; display: grid; place-items: center; padding: 24px; background: #f0fdfa; }
 .login-card { width: min(100%, 400px); background: white; padding: 32px; border-radius: 16px; box-shadow: 0 8px 30px rgba(15, 118, 110, .12); }
 .login-card h1 { margin: 0 0 8px; }
 .login-card p { color: #6b7280; }

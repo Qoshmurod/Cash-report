@@ -1,0 +1,65 @@
+# Usage: cp .env.example .env (fill secrets), then: docker compose up -d --build
+# Tuned for small VPS: whole stack stays well under 512 MB RAM.
+x-logging: &logging
+  driver: json-file
+  options: { max-size: "10m", max-file: "3" }
+
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: kassa
+      POSTGRES_USER: kassa
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
+    # Small-memory PostgreSQL profile (clinic workload: few users, small tables).
+    command: >
+      postgres
+      -c shared_buffers=48MB
+      -c effective_cache_size=192MB
+      -c work_mem=2MB
+      -c maintenance_work_mem=32MB
+      -c max_connections=20
+      -c max_wal_size=256MB
+      -c min_wal_size=64MB
+      -c wal_buffers=4MB
+      -c jit=off
+      -c max_worker_processes=2
+      -c max_parallel_workers=1
+      -c max_parallel_workers_per_gather=0
+      -c autovacuum_max_workers=1
+      -c log_min_duration_statement=2000
+    shm_size: 64m
+    mem_limit: 256m
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U kassa -d kassa"]
+      interval: 10s
+      retries: 10
+    logging: *logging
+
+  app:
+    build: .
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://kassa:${POSTGRES_PASSWORD}@db:5432/kassa?connection_limit=4
+      DIRECT_URL: postgresql://kassa:${POSTGRES_PASSWORD}@db:5432/kassa
+      NUXT_SESSION_SECRET: ${NUXT_SESSION_SECRET:?set NUXT_SESSION_SECRET in .env}
+      BOOTSTRAP_ADMIN_TOKEN: ${BOOTSTRAP_ADMIN_TOKEN:-}
+      AUTO_CREATE_ADMIN: ${AUTO_CREATE_ADMIN:-false}
+      BOOTSTRAP_ADMIN_USERNAME: ${BOOTSTRAP_ADMIN_USERNAME:-}
+      BOOTSTRAP_ADMIN_PASSWORD: ${BOOTSTRAP_ADMIN_PASSWORD:-}
+      COOKIE_SECURE: ${COOKIE_SECURE:-true}
+      APP_TZ_OFFSET_MINUTES: ${APP_TZ_OFFSET_MINUTES:-300}
+    mem_limit: 320m
+    cpus: 1.0
+    ports:
+      - "127.0.0.1:${APP_PORT:-3000}:3000"
+    logging: *logging
+
+volumes:
+  pgdata:

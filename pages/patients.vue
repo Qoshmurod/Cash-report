@@ -1,9 +1,10 @@
 <script setup lang="ts">
-const { data: me } = await useFetch('/api/auth/me')
-const user = computed(() => (me as any).value?.user)
-const canEdit = computed(() => ['SUPER_ADMIN', 'OPERATOR'].includes(user.value?.role))
-const canDelete = computed(() => user.value?.role === 'SUPER_ADMIN')
-const canImport = computed(() => user.value?.role === 'SUPER_ADMIN')
+definePageMeta({ alias: '/admin/patients' })
+const { can, canAny } = useAuth()
+const canCreate = computed(() => canAny('PATIENTS_CREATE', 'PAYMENTS_CREATE'))
+const canEdit = computed(() => can('PATIENTS_NAME_EDIT'))
+const canDelete = computed(() => can('PATIENTS_DELETE'))
+const canImport = computed(() => can('PATIENTS_IMPORT'))
 
 const patients = ref<any[]>([])
 const total = ref(0)
@@ -25,9 +26,9 @@ async function load() {
   if (filter.from) q.from = filter.from
   if (filter.to) q.to = filter.to
 
-  const { data } = await useFetch('/api/patients', { query: q })
-  patients.value = (data as any).value?.patients || []
-  total.value = (data as any).value?.total || 0
+  const data: any = await $fetch('/api/patients', { query: q }).catch((e) => { alert(apiError(e)); return null })
+  patients.value = data?.patients || []
+  total.value = data?.total || 0
 }
 
 function openNew() {
@@ -67,15 +68,19 @@ async function save() {
     showModal.value = false
     await load()
   } catch (e: any) {
-    alert('Xato: ' + (e.data?.statusMessage || e.message))
+    alert('Xato: ' + apiError(e))
   }
 }
 
 async function remove(id: number) {
   if (!canDelete.value) return
   if (!confirm('Bemorni o‘chirishni tasdiqlaysizmi?')) return
-  await $fetch(`/api/patients/${id}`, { method: 'DELETE' })
-  await load()
+  try {
+    await $fetch(`/api/patients/${id}`, { method: 'DELETE' })
+    await load()
+  } catch (e: any) {
+    alert(apiError(e))
+  }
 }
 
 const fileInput = ref<HTMLInputElement | null>(null)
@@ -101,7 +106,7 @@ async function onFileChange(e: Event) {
     alert(`✅ Qo'shildi: ${res.added}\n⏭ O'tkazib yuborildi: ${res.skipped}`)
     await load()
   } catch (err: any) {
-    alert('Xato: ' + err.message)
+    alert('Xato: ' + apiError(err))
   } finally {
     importing.value = false
     if (fileInput.value) fileInput.value.value = ''
@@ -130,7 +135,7 @@ onMounted(load)
         <button v-if="canImport" class="btn secondary" :disabled="importing" @click="triggerImport">
           {{ importing ? '⏳...' : '📥 Excel/CSV import' }}
         </button>
-        <button v-if="canEdit" class="btn" @click="openNew">➕ Yangi bemor</button>
+        <button v-if="canCreate" class="btn" @click="openNew">➕ Yangi bemor</button>
       </div>
       <input ref="fileInput" type="file" accept=".xlsx,.xls,.csv,.txt" style="display: none" @change="onFileChange" />
     </div>
@@ -148,10 +153,16 @@ onMounted(load)
         <label>Gacha</label>
         <input v-model="filter.to" type="date" />
       </div>
-      <button class="btn secondary" @click="load">🔍 Filtrlash</button>
+      <button class="btn secondary" @click="filter.page = 1; load()">🔍 Filtrlash</button>
     </div>
 
-    <div class="total-line">Jami: <strong>{{ total }}</strong> ta bemor</div>
+    <div class="total-line">Jami: <strong>{{ total }}</strong> ta bemor
+      <span v-if="total > 50" style="float: right">
+        <button class="btn secondary small" :disabled="filter.page <= 1" @click="filter.page--; load()">◀</button>
+        {{ filter.page }} / {{ Math.ceil(total / 50) }}
+        <button class="btn secondary small" :disabled="filter.page * 50 >= total" @click="filter.page++; load()">▶</button>
+      </span>
+    </div>
 
     <table class="table">
       <thead>
@@ -161,7 +172,8 @@ onMounted(load)
           <th>Telefon</th>
           <th>Tug‘ilgan yili</th>
           <th>Manzil</th>
-          <th v-if="canEdit">Amal</th>
+          <th>Shartnoma</th>
+          <th v-if="canEdit || canDelete">Amal</th>
         </tr>
       </thead>
       <tbody>
@@ -171,13 +183,14 @@ onMounted(load)
           <td>{{ p.phone || '—' }}</td>
           <td>{{ p.birthYear || '—' }}</td>
           <td>{{ p.address || '—' }}</td>
-          <td v-if="canEdit">
-            <button class="btn secondary small" @click="openEdit(p)">✏️</button>
+          <td><span v-for="c in p.contractClients" :key="c.contract.id" class="badge blue">№{{ c.contract.number }} {{ c.contract.organization }}</span></td>
+          <td v-if="canEdit || canDelete">
+            <button v-if="canEdit" class="btn secondary small" @click="openEdit(p)">✏️</button>
             <button v-if="canDelete" class="btn danger small" @click="remove(p.id)">🗑</button>
           </td>
         </tr>
         <tr v-if="!patients.length">
-          <td :colspan="canEdit ? 6 : 5" class="empty">Bemorlar topilmadi</td>
+          <td colspan="7" class="empty">Bemorlar topilmadi</td>
         </tr>
       </tbody>
     </table>

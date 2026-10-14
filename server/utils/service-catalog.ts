@@ -1,5 +1,3 @@
-import { prisma } from './prisma'
-
 export const SERVICE_CATALOG = [
   ['BAKTERIOLOGIYA', "Yuqori nafas yo'llarida stafilikokni aniqlash (St. Aures tibbiy daftarcha uchun)"],
   ['BAKTERIOLOGIYA', 'Najasni patogen enterobakteriya (salmonella, shigella) tekshirish (dez. GR. tibbiy daftarcha)'],
@@ -21,10 +19,3 @@ export const SERVICE_CATALOG = [
   ['VIRUSOLOGIYA', 'Virusli gepatit E ga tekshirish'],
   ['VIRUSOLOGIYA', 'Gonokokka tekshiruv']
 ] as const
-
-export async function ensureServiceCatalog() {
-  await prisma.service.createMany({
-    data: SERVICE_CATALOG.map(([department, name]) => ({ department, name, price: 0 })),
-    skipDuplicates: true
-  })
-}

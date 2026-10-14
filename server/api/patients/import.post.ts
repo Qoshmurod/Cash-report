@@ -1,9 +1,10 @@
-import * as XLSX from 'xlsx'
 import { prisma } from '../../utils/prisma'
-import { requireAuth } from '../../utils/auth'
+import { requirePermission } from '../../utils/auth'
+import { audit } from '../../utils/audit'
+import { loadXlsx } from '../../utils/lazy'
 
 export default defineEventHandler(async (event) => {
-  await requireAuth(event, ['SUPER_ADMIN'])
+  const user = await requirePermission(event, 'PATIENTS_IMPORT')
   const contentType = getHeader(event, 'content-type') || ''
   let sourceRows: unknown[] = []
 
@@ -11,6 +12,7 @@ export default defineEventHandler(async (event) => {
     const parts = await readMultipartFormData(event)
     const file = parts?.find((part) => part.name === 'file' && part.data)
     if (!file?.data) throw createError({ statusCode: 400, statusMessage: 'Excel fayl tanlanmagan' })
+    const XLSX = loadXlsx()
     try {
       const workbook = XLSX.read(file.data, { type: 'buffer', cellDates: true })
       const firstSheet = workbook.Sheets[workbook.SheetNames[0]]
@@ -70,5 +72,6 @@ export default defineEventHandler(async (event) => {
   }
 
   if (rows.length) await prisma.patient.createMany({ data: rows })
+  await audit(event, user, 'IMPORT', 'patient', null, `Bemorlar import qilindi: ${rows.length}`)
   return { added: rows.length, skipped, total: sourceRows.length }
 })

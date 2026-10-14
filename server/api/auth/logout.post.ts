@@ -1,6 +1,9 @@
-import { destroySession } from '../../utils/auth'
+import { destroySession, getAuthUser } from '../../utils/auth'
+import { recordLogin } from '../../utils/audit'
 
-export default defineEventHandler((event) => {
-  destroySession(event)
+export default defineEventHandler(async (event) => {
+  const user = await getAuthUser(event)
+  if (user) await recordLogin(event, user, 'LOGOUT')
+  await destroySession(event)
   return { ok: true }
 })

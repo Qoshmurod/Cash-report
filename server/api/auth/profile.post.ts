@@ -35,11 +35,6 @@ export default defineEventHandler(async (event) => {
     }
   })
   await prisma.session.deleteMany({ where: { userId: user.id } })
-  await createSession(event, {
-    id: updated.id,
-    username: updated.username,
-    role: updated.role,
-    mustChangePassword: updated.mustChangePassword
-  })
+  await createSession(event, { id: updated.id })
   return { ok: true, username: nextUsername }
 })
