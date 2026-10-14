@@ -1,6 +1,6 @@
 # Klinika Kassasi
 
-Nuxt 3 clinic cashier and patient-management app backed by Prisma and PostgreSQL.
+Nuxt 3 clinic cashier and patient-management app backed by Prisma and PostgreSQL. Runs in Docker (app + PostgreSQL).
 
 ## Funksiyalar
 
@@ -81,9 +81,6 @@ curl -X POST https://kassa.example.uz/api/auth/bootstrap \
 
 Keyin super admin bilan kiring → **Super admin** sahifasida rollarni yarating → **Xodimlar**da xodim qo‘shib, rol biriktiring.
 
-### Vercel / Supabase
-
-`vercel.json` production deployda (`DIRECT_URL` sozlangan bo‘lsa) `prisma db push` ni o‘zi bajaradi; preview deploylar bazaga tegmaydi. Vercel'da `DATABASE_URL`, `DIRECT_URL`, `NUXT_SESSION_SECRET` sozlangan bo‘lishi kifoya. Vercel so‘rov hajmi 4.5 MB bilan cheklangan, shuning uchun katta shartnoma fayllari uchun o‘z serveringiz yaxshiroq.
 
 ## Texnik eslatmalar
 

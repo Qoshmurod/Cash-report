@@ -1,6 +1,0 @@
-{
-  "framework": "nuxtjs",
-  "installCommand": "npm install",
-  "buildCommand": "if [ \"$VERCEL_ENV\" = \"production\" ] && [ -n \"$DIRECT_URL\" ]; then npx prisma db push --skip-generate; fi && npm run build",
-  "devCommand": "npm run dev"
-}
