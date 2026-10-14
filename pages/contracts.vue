@@ -1,4 +1,5 @@
 <script setup lang="ts">
+definePageMeta({ alias: '/admin/contracts' })
 const { can, canAny } = useAuth()
 const tab = ref(canAny('CONTRACTS_VIEW', 'CONTRACTS_MANAGE') ? 'contracts' : 'letters')
 const contracts = ref<any[]>([])
@@ -139,7 +140,7 @@ onMounted(() => { loadContracts(); loadLetters() })
             <tr v-for="c in contracts" :key="c.id">
               <td><strong>{{ c.number }}</strong></td>
               <td>{{ c.organization }}<div class="muted">{{ c.note }}</div></td>
-              <td>{{ c.startDate?.slice(0, 10) || '—' }} — {{ c.endDate?.slice(0, 10) || '—' }}</td>
+              <td>{{ c.startDate || c.endDate ? `${c.startDate?.slice(0, 10) || '…'} — ${c.endDate?.slice(0, 10) || '…'}` : 'Muddatsiz' }}</td>
               <td>{{ c._count.clients }} ta<div class="muted">{{ c._count.payments }} ta murojaat</div></td>
               <td><span v-if="!c.active" class="badge red">Faol emas</span><span v-else-if="isExpired(c)" class="badge amber">Muddati o‘tgan</span><span v-else class="badge green">Faol</span></td>
               <td>

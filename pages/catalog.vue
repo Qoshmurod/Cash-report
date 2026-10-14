@@ -1,4 +1,5 @@
 <script setup lang="ts">
+definePageMeta({ alias: '/admin/catalog' })
 const { can } = useAuth()
 const { departments, depLabel } = useMeta()
 const tab = ref(can('SERVICES_VIEW') ? 'services' : 'doctors')

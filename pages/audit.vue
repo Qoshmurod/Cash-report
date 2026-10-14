@@ -1,4 +1,5 @@
 <script setup lang="ts">
+definePageMeta({ alias: '/admin/audit' })
 const filter = reactive({ from: '', to: '', search: '', entity: '' })
 const data = ref<any>(null)
 const tab = ref('audit')

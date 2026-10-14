@@ -1,4 +1,5 @@
 <script setup lang="ts">
+definePageMeta({ alias: '/admin/staff' })
 const { user, can } = useAuth()
 const users = ref<any[]>([])
 const roles = ref<any[]>([])

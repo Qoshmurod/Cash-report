@@ -1,4 +1,5 @@
 <script setup lang="ts">
+definePageMeta({ alias: '/admin/kassa' })
 const { t } = useI18n()
 const { can } = useAuth()
 const { departments, methods, depLabel, methodLabel } = useMeta()

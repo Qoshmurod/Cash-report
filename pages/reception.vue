@@ -1,4 +1,5 @@
 <script setup lang="ts">
+definePageMeta({ alias: '/admin/reception' })
 const { can } = useAuth()
 const doctorList = ref<any[]>([])
 const serviceList = ref<any[]>([])

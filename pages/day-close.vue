@@ -1,4 +1,5 @@
 <script setup lang="ts">
+definePageMeta({ alias: '/admin/day-close' })
 const { user } = useAuth()
 const { departments, methods, depLabel, methodLabel } = useMeta()
 const date = ref(todayString())

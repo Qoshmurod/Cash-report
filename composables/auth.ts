@@ -32,16 +32,16 @@ export function useAuth() {
   const navItems = computed(() => {
     if (!user.value) return []
     const items = [
-      { to: '/kassa', icon: '💰', key: 'cash', show: canAny('PAYMENTS_VIEW', 'PAYMENTS_CREATE') },
-      { to: '/patients', icon: '👥', key: 'patients', show: canAny('PATIENTS_VIEW', 'PAYMENTS_CREATE') },
-      { to: '/reception', icon: '📋', key: 'reception', show: can('APPOINTMENTS_VIEW') },
-      { to: '/department', icon: '🧪', key: 'departments', show: can('PAYMENTS_VIEW') || (can('DEPARTMENTS_VIEW') && user.value.departments.length > 0) },
-      { to: '/contracts', icon: '📄', key: 'contracts', show: canAny('CONTRACTS_VIEW', 'CONTRACTS_MANAGE', 'GUARANTEE_LETTERS_VIEW', 'GUARANTEE_LETTERS_UPLOAD') },
-      { to: '/day-close', icon: '🔒', key: 'dayClose', show: can('DAY_CLOSE') },
-      { to: '/catalog', icon: '🩺', key: 'catalog', show: canAny('SERVICES_VIEW', 'DOCTORS_VIEW') },
-      { to: '/staff', icon: '👔', key: 'staff', show: can('STAFF_VIEW') },
-      { to: '/permissions', icon: '🔑', key: 'grants', show: Boolean(user.value.isSuperAdmin || user.value.grantable.length) },
-      { to: '/audit', icon: '📜', key: 'audit', show: can('AUDIT_VIEW') },
+      { to: '/admin/kassa', icon: '💰', key: 'cash', show: canAny('PAYMENTS_VIEW', 'PAYMENTS_CREATE') },
+      { to: '/admin/patients', icon: '👥', key: 'patients', show: canAny('PATIENTS_VIEW', 'PAYMENTS_CREATE') },
+      { to: '/admin/reception', icon: '📋', key: 'reception', show: can('APPOINTMENTS_VIEW') },
+      { to: '/admin/department', icon: '🧪', key: 'departments', show: can('PAYMENTS_VIEW') || (can('DEPARTMENTS_VIEW') && user.value.departments.length > 0) },
+      { to: '/admin/contracts', icon: '📄', key: 'contracts', show: canAny('CONTRACTS_VIEW', 'CONTRACTS_MANAGE', 'GUARANTEE_LETTERS_VIEW', 'GUARANTEE_LETTERS_UPLOAD') },
+      { to: '/admin/day-close', icon: '🔒', key: 'dayClose', show: can('DAY_CLOSE') },
+      { to: '/admin/catalog', icon: '🩺', key: 'catalog', show: canAny('SERVICES_VIEW', 'DOCTORS_VIEW') },
+      { to: '/admin/staff', icon: '👔', key: 'staff', show: can('STAFF_VIEW') },
+      { to: '/admin/permissions', icon: '🔑', key: 'grants', show: Boolean(user.value.isSuperAdmin || user.value.grantable.length) },
+      { to: '/admin/audit', icon: '📜', key: 'audit', show: can('AUDIT_VIEW') },
       { to: '/admin', icon: '👑', key: 'superAdmin', show: user.value.isSuperAdmin }
     ]
     return items.filter((item) => item.show)

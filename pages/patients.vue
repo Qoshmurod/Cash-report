@@ -1,4 +1,5 @@
 <script setup lang="ts">
+definePageMeta({ alias: '/admin/patients' })
 const { can, canAny } = useAuth()
 const canCreate = computed(() => canAny('PATIENTS_CREATE', 'PAYMENTS_CREATE'))
 const canEdit = computed(() => can('PATIENTS_NAME_EDIT'))

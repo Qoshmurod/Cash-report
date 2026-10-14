@@ -68,7 +68,7 @@ onMounted(loadContact)
     <header v-if="user && route.path !== '/'" class="topbar">
       <NuxtLink :to="navItems[0]?.to || '/'" class="brand">🏥 {{ t('clinic') }}</NuxtLink>
       <nav class="nav">
-        <NuxtLink v-for="item in navItems" :key="item.to" :to="item.to" :class="{ active: route.path.startsWith(item.to) }">{{ item.icon }} {{ t(item.key) }}</NuxtLink>
+        <NuxtLink v-for="item in navItems" :key="item.to" :to="item.to" :class="{ active: item.to === '/admin' ? route.path === '/admin' : route.path.startsWith(item.to) }">{{ item.icon }} {{ t(item.key) }}</NuxtLink>
       </nav>
       <div class="nav-user">
         <select v-model="language" class="language-select" aria-label="Language">

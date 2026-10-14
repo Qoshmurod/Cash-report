@@ -1,4 +1,5 @@
 <script setup lang="ts">
+definePageMeta({ alias: '/admin/department/:department()' })
 const route = useRoute()
 const { depLabel } = useMeta()
 const department = computed(() => String(route.params.department || '').toUpperCase())

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+definePageMeta({ alias: '/admin/permissions' })
 const { permissionGroups } = useMeta()
 const data = ref<any>(null)
 const selectedId = ref<number | null>(null)
