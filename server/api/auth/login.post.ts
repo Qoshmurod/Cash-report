@@ -4,12 +4,18 @@ import { recordLogin } from '../../utils/audit'
 
 const attempts = new Map<string, { count: number; resetAt: number }>()
 
+function pruneAttempts() {
+  const now = Date.now()
+  for (const [key, value] of attempts) if (value.resetAt <= now) attempts.delete(key)
+}
+
 export default defineEventHandler(async (event) => {
   const body = await readBody(event)
   const username = String(body?.username || '').trim().toLowerCase()
   const password = String(body?.password || '')
   const ip = getRequestIP(event, { xForwardedFor: true }) || 'unknown'
   const key = `${ip}:${username}`
+  if (attempts.size > 500) pruneAttempts()
   const current = attempts.get(key)
   if (current && current.resetAt > Date.now() && current.count >= 5) {
     throw createError({ statusCode: 429, statusMessage: 'Juda ko‘p urinish. Keyinroq qayta urinib ko‘ring' })

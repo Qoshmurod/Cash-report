@@ -18,5 +18,5 @@ export default defineEventHandler(async (event) => {
     orderBy: { createdAt: 'asc' }
   })
   await audit(event, user, 'EXPORT', 'day-close', body.date, `${body.date} kunidan ${payments.length} ta to‘lov yuklab olindi`)
-  return sendWorkbook(event, paymentsWorkbook(payments, `Kun ${body.date}`), `kun-${body.date}.xlsx`)
+  return sendWorkbook(event, await paymentsWorkbook(payments, `Kun ${body.date}`), `kun-${body.date}.xlsx`)
 })

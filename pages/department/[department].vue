@@ -18,10 +18,9 @@ async function load() {
 }
 // Only analyses belonging to this department are shown for each patient.
 const services = (payment: any) => payment.paymentServices?.filter((item: any) => item.service.department === department.value).map((item: any) => item.service.name).join(', ') || payment.service || '—'
-let timer: ReturnType<typeof setInterval> | undefined
 watch(date, load)
-onMounted(() => { load(); timer = setInterval(load, 10000) })
-onUnmounted(() => clearInterval(timer))
+usePolling(load, 15000)
+onMounted(load)
 </script>
 
 <template>

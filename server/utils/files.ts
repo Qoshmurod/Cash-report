@@ -1,6 +1,5 @@
-import * as XLSX from 'xlsx'
-import mammoth from 'mammoth'
 import { prisma } from './prisma'
+import { loadMammoth, loadXlsx } from './lazy'
 
 export const MAX_FILE_BYTES = 15 * 1024 * 1024
 
@@ -39,6 +38,7 @@ function decodeEntities(text: string) {
 export async function readTableRows(file: UploadedFile): Promise<string[][]> {
   const name = file.filename.toLowerCase()
   if (name.endsWith('.docx')) {
+    const mammoth = loadMammoth()
     const { value: html } = await mammoth.convertToHtml({ buffer: Buffer.from(file.data) })
     const rows: string[][] = []
     for (const row of html.match(/<tr[\s\S]*?<\/tr>/g) || []) {
@@ -48,6 +48,7 @@ export async function readTableRows(file: UploadedFile): Promise<string[][]> {
     return rows
   }
   if (name.endsWith('.doc')) throw createError({ statusCode: 400, statusMessage: 'Eski .doc formati qo‘llanmaydi. Faylni .docx yoki Excel ko‘rinishida saqlang' })
+  const XLSX = loadXlsx()
   try {
     const workbook = XLSX.read(file.data, { type: 'buffer', cellDates: true })
     const sheet = workbook.Sheets[workbook.SheetNames[0]!]
@@ -123,29 +124,66 @@ export function extractClients(rows: string[][]) {
 const digits = (value: string | null) => (value || '').replace(/\D/g, '').slice(-9)
 
 // Links every client to an existing patient (same name, no conflicting phone/year) or creates one.
+// Works in batches: a 2,000-row list costs a handful of queries instead of thousands.
 export async function attachClients(contractId: number, clients: ClientRow[]) {
-  let created = 0
-  let linked = 0
-  let duplicates = 0
-  for (const client of clients) {
-    const candidates = await prisma.patient.findMany({ where: { fullName: { equals: client.fullName, mode: 'insensitive' } } })
-    let patient = candidates.find((item) =>
-      (!client.phone || !item.phone || digits(client.phone) === digits(item.phone)) &&
-      (!client.birthYear || !item.birthYear || client.birthYear === item.birthYear))
-    if (patient) {
-      linked++
-      if ((!patient.phone && client.phone) || (!patient.birthYear && client.birthYear) || (!patient.address && client.address)) {
-        patient = await prisma.patient.update({
-          where: { id: patient.id },
-          data: { phone: patient.phone || client.phone, birthYear: patient.birthYear || client.birthYear, address: patient.address || client.address }
-        })
-      }
-    } else {
-      patient = await prisma.patient.create({ data: { fullName: client.fullName, phone: client.phone, birthYear: client.birthYear, address: client.address } })
-      created++
-    }
-    const result = await prisma.contractClient.createMany({ data: [{ contractId, patientId: patient.id, position: client.position }], skipDuplicates: true })
-    if (!result.count) duplicates++
+  const names = [...new Set(clients.map((client) => client.fullName))]
+  const existing: Array<{ id: number; fullName: string; phone: string | null; birthYear: number | null; address: string | null }> = []
+  for (let i = 0; i < names.length; i += 1000) {
+    existing.push(...await prisma.patient.findMany({
+      where: { fullName: { in: names.slice(i, i + 1000), mode: 'insensitive' } },
+      select: { id: true, fullName: true, phone: true, birthYear: true, address: true }
+    }))
   }
-  return { created, linked, duplicates, total: clients.length }
+  const byName = new Map<string, typeof existing>()
+  const add = (patient: (typeof existing)[number]) => {
+    const key = patient.fullName.toLocaleLowerCase()
+    byName.set(key, [...(byName.get(key) || []), patient])
+  }
+  existing.forEach(add)
+  const compatible = (client: ClientRow, item: (typeof existing)[number]) =>
+    (!client.phone || !item.phone || digits(client.phone) === digits(item.phone)) &&
+    (!client.birthYear || !item.birthYear || client.birthYear === item.birthYear)
+
+  let linked = 0
+  const updates = new Map<number, { phone: string | null; birthYear: number | null; address: string | null }>()
+  const pending: ClientRow[] = []
+  const matched: Array<{ client: ClientRow; patientId: number }> = []
+  for (const client of clients) {
+    const patient = (byName.get(client.fullName.toLocaleLowerCase()) || []).find((item) => compatible(client, item))
+    if (!patient) {
+      // Rows repeated inside the same file collapse into one new patient.
+      if (!pending.some((other) => other.fullName.toLocaleLowerCase() === client.fullName.toLocaleLowerCase() && compatible(client, { id: 0, ...other }))) pending.push(client)
+      continue
+    }
+    linked++
+    matched.push({ client, patientId: patient.id })
+    if ((!patient.phone && client.phone) || (!patient.birthYear && client.birthYear) || (!patient.address && client.address)) {
+      patient.phone ||= client.phone
+      patient.birthYear ||= client.birthYear
+      patient.address ||= client.address
+      updates.set(patient.id, { phone: patient.phone, birthYear: patient.birthYear, address: patient.address })
+    }
+  }
+  for (let i = 0; i < pending.length; i += 500) {
+    const created = await prisma.patient.createManyAndReturn({
+      data: pending.slice(i, i + 500).map(({ fullName, phone, birthYear, address }) => ({ fullName, phone, birthYear, address })),
+      select: { id: true, fullName: true, phone: true, birthYear: true, address: true }
+    })
+    created.forEach(add)
+  }
+  // Clients that were pending now resolve to the patients just created.
+  for (const client of clients) {
+    if (matched.some((item) => item.client === client)) continue
+    const patient = (byName.get(client.fullName.toLocaleLowerCase()) || []).find((item) => compatible(client, item))
+    if (patient) matched.push({ client, patientId: patient.id })
+  }
+  if (updates.size) {
+    await prisma.$transaction([...updates].map(([id, data]) => prisma.patient.update({ where: { id }, data })))
+  }
+  const links = [...new Map(matched.map(({ client, patientId }) => [patientId, { contractId, patientId, position: client.position }])).values()]
+  let inserted = 0
+  for (let i = 0; i < links.length; i += 1000) {
+    inserted += (await prisma.contractClient.createMany({ data: links.slice(i, i + 1000), skipDuplicates: true })).count
+  }
+  return { created: pending.length, linked, duplicates: clients.length - inserted, total: clients.length }
 }

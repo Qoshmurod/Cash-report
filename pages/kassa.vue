@@ -197,7 +197,7 @@ function paymentServices(payment: any) {
   return [...(payment.paymentServices || []).map((item: any) => item.service.name), payment.service].filter(Boolean).join(', ') || '—'
 }
 
-let interval: ReturnType<typeof setInterval> | undefined
+usePolling(loadStats, 30000)
 onMounted(async () => {
   const [d, s]: any[] = await Promise.all([
     $fetch('/api/doctors').catch(() => ({ doctors: [] })),
@@ -207,9 +207,7 @@ onMounted(async () => {
   serviceList.value = s.services
   loadStats()
   loadPayments()
-  interval = setInterval(loadStats, 15000)
 })
-onUnmounted(() => clearInterval(interval))
 </script>
 
 <template>

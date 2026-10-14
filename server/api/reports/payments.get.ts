@@ -13,5 +13,5 @@ export default defineEventHandler(async (event) => {
     include: paymentInclude,
     orderBy: { createdAt: 'asc' }
   })
-  return sendWorkbook(event, paymentsWorkbook(payments), 'cash-report.xlsx')
+  return sendWorkbook(event, await paymentsWorkbook(payments), 'cash-report.xlsx')
 })

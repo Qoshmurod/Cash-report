@@ -1,10 +1,11 @@
-import * as XLSX from 'xlsx'
 import { PAYMENT_METHODS } from './catalog'
 import { localDateTimeString } from './dates'
+import { loadXlsx } from './lazy'
 
 const methodLabel = (value: string) => PAYMENT_METHODS.find((item) => item.value === value)?.label || value
 
-export function paymentsWorkbook(payments: any[], title = 'Cash report') {
+export async function paymentsWorkbook(payments: any[], title = 'Cash report') {
+  const XLSX = loadXlsx()
   const rows: Record<string, string | number>[] = payments.map((p) => ({
     ID: p.id,
     Sana: localDateTimeString(p.createdAt),

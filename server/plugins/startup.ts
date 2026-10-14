@@ -25,4 +25,9 @@ export default defineNitroPlugin(() => {
       console.error('startup data upgrade failed', error)
     }
   })()
+
+  // Expired sessions are removed hourly so the table (and its index) stays small.
+  const cleanup = () => prisma.session.deleteMany({ where: { expiresAt: { lt: new Date() } } }).catch(() => {})
+  void cleanup()
+  setInterval(cleanup, 60 * 60 * 1000).unref()
 })
