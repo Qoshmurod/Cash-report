@@ -1,6 +1,6 @@
 {
   "framework": "nuxtjs",
   "installCommand": "npm install",
-  "buildCommand": "npm run build",
+  "buildCommand": "prisma db push --skip-generate && npm run build",
   "devCommand": "npm run dev"
 }
