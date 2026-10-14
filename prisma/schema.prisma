@@ -19,6 +19,7 @@ model Patient {
   updatedAt DateTime  @updatedAt
   payments  Payment[]
   appointments Appointment[]
+  contractClients ContractClient[]
 
   @@index([fullName])
   @@index([phone])
@@ -39,6 +40,12 @@ model Payment {
   doctorId   Int?
   doctor     Doctor? @relation(fields: [doctorId], references: [id], onDelete: SetNull)
   paymentServices PaymentService[]
+  contractId Int?
+  contract   Contract? @relation(fields: [contractId], references: [id], onDelete: SetNull)
+  createdById Int?
+  createdBy   User?    @relation("PaymentCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  editedAt    DateTime?
+  editReason  String?
 
   @@index([createdAt])
   @@index([department])
@@ -50,6 +57,7 @@ enum PaymentMethod {
   CASH
   CARD
   TRANSFER
+  CONTRACT
 }
 
 enum AppointmentStatus {
@@ -112,10 +120,31 @@ model Appointment {
   @@index([patientId])
 }
 
+// ADMIN is a legacy value: such accounts are promoted to SUPER_ADMIN at server start.
+// OPERATOR means a regular staff member whose access comes from a custom Role and direct grants.
 enum UserRole {
   SUPER_ADMIN
   ADMIN
   OPERATOR
+}
+
+model Role {
+  id          Int              @id @default(autoincrement())
+  name        String           @unique
+  description String?
+  departments String[]         @default([])
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+  permissions RolePermission[]
+  users       User[]
+}
+
+model RolePermission {
+  roleId       Int
+  permissionId Int
+  role         Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permission   Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+  @@id([roleId, permissionId])
 }
 
 model User {
@@ -132,6 +161,13 @@ model User {
   permissions          UserPermission[]
   doctorId             Int?      @unique
   doctor               Doctor?  @relation(fields: [doctorId], references: [id], onDelete: SetNull)
+  fullName             String?
+  phone                String?
+  position             String?
+  roleId               Int?
+  customRole           Role?     @relation(fields: [roleId], references: [id], onDelete: SetNull)
+  lastLoginAt          DateTime?
+  createdPayments      Payment[] @relation("PaymentCreatedBy")
 
   @@index([role])
 }
@@ -141,6 +177,7 @@ model Permission {
   code  String @unique
   label String
   users UserPermission[]
+  roles RolePermission[]
 }
 
 model UserPermission {
@@ -148,6 +185,10 @@ model UserPermission {
   permissionId Int
   user         User       @relation(fields: [userId], references: [id], onDelete: Cascade)
   permission   Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+  // canGrant lets this user hand the same permission to other staff (set only by super admin).
+  canGrant     Boolean    @default(false)
+  grantedById  Int?
+  createdAt    DateTime   @default(now())
   @@id([userId, permissionId])
 }
 
@@ -160,4 +201,105 @@ model Session {
 
   @@index([userId])
   @@index([expiresAt])
+}
+
+// Super admin activity is intentionally never written to LoginEvent or AuditLog.
+model LoginEvent {
+  id        Int      @id @default(autoincrement())
+  userId    Int?
+  username  String
+  type      String
+  ip        String?
+  userAgent String?
+  createdAt DateTime @default(now())
+
+  @@index([userId, createdAt])
+  @@index([createdAt])
+}
+
+model AuditLog {
+  id        Int      @id @default(autoincrement())
+  userId    Int?
+  username  String
+  action    String
+  entity    String
+  entityId  String?
+  summary   String
+  details   Json?
+  ip        String?
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([userId])
+  @@index([entity])
+}
+
+model Setting {
+  key       String   @id
+  value     Json
+  updatedAt DateTime @updatedAt
+}
+
+model Contract {
+  id              Int              @id @default(autoincrement())
+  number          String
+  organization    String
+  startDate       DateTime?
+  endDate         DateTime?
+  note            String?
+  active          Boolean          @default(true)
+  fileName        String?
+  fileMime        String?
+  fileData        Bytes?
+  clientsFileName String?
+  createdById     Int?
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  clients         ContractClient[]
+  payments        Payment[]
+  letters         GuaranteeLetter[]
+
+  @@index([organization])
+}
+
+model ContractClient {
+  id         Int      @id @default(autoincrement())
+  contractId Int
+  patientId  Int
+  position   String?
+  note       String?
+  createdAt  DateTime @default(now())
+  contract   Contract @relation(fields: [contractId], references: [id], onDelete: Cascade)
+  patient    Patient  @relation(fields: [patientId], references: [id], onDelete: Cascade)
+
+  @@unique([contractId, patientId])
+  @@index([patientId])
+}
+
+model GuaranteeLetter {
+  id          Int       @id @default(autoincrement())
+  title       String
+  kind        String    @default("LETTER")
+  contractId  Int?
+  contract    Contract? @relation(fields: [contractId], references: [id], onDelete: SetNull)
+  note        String?
+  fileName    String
+  fileMime    String
+  fileData    Bytes
+  createdById Int?
+  createdAt   DateTime  @default(now())
+
+  @@index([kind])
+}
+
+model DayClosure {
+  id           Int      @id @default(autoincrement())
+  date         String   @unique
+  total        Int
+  count        Int
+  byMethod     Json
+  note         String?
+  closedById   Int?
+  closedByName String
+  createdAt    DateTime @default(now())
 }

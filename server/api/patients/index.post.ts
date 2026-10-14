@@ -1,6 +1,8 @@
 import { prisma } from '../../utils/prisma'
+import { requireAnyPermission } from '../../utils/auth'
 
 export default defineEventHandler(async (event) => {
+  await requireAnyPermission(event, ['PATIENTS_CREATE', 'PAYMENTS_CREATE', 'APPOINTMENTS_MANAGE'])
   const body = await readBody(event)
   if (!body?.fullName) throw createError({ statusCode: 400, statusMessage: 'Ism-familiya shart' })
   const fullName = String(body.fullName).trim()

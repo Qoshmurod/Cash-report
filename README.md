@@ -1,35 +1,66 @@
 # Klinika Kassasi
 
-Nuxt 3 clinic cashier and patient-management app backed by Prisma and PostgreSQL (Supabase).
+Nuxt 3 clinic cashier and patient-management app backed by Prisma and PostgreSQL.
 
-## Run locally
+## Funksiyalar
 
-1. Install Node.js 20 or newer.
-2. Copy `.env.example` to `.env` and replace both Supabase connection-string placeholders.
-3. Install dependencies with `npm install` (this runs `prisma generate`).
-4. Apply the schema with `npm run prisma:push`.
-5. Start the UI with `npm run dev`.
+- **Super admin** — tizimdagi eng yuqori rol (avvalgi «Administrator» roli super adminga almashtirildi: mavjud `ADMIN` hisoblar server ishga tushganda avtomatik `SUPER_ADMIN` bo‘ladi). Super admin barcha bo‘lim va amallarga kiradi.
+- **Rollar** (`/admin`) — super admin istalgancha rol yaratadi/tahrirlaydi/o‘chiradi: rol qaysi bo‘limlarga (Kassa, Bemorlar, Qabul, Shartnomalar, Kunni yopish, Xodimlar, Audit…) kira olishi, qaysi amallarni bajarishi va qaysi laboratoriya bo‘limlarini ko‘rishi belgilanadi.
+- **Ruxsatlarni topshirish** (`/permissions`) — super admin xodimga istalgan ruxsatni beradi va «Boshqalarga bera oladi» belgisi bilan shu ruxsatni boshqa xodimlarga berish vakolatini ham beradi (masalan, rahbarga). Rahbar faqat shu ruxsatlarni beradi/oladi va vakolatni o‘zi tarqata olmaydi.
+- **Xodimlar** (`/staff`) — ma’lumotlarini tahrirlash, kirish tarixi, deaktivatsiya/faollashtirish, tizimdan o‘chirish, parolni tiklash (super admin).
+- **Xizmatlar va shifokorlar** (`/catalog`) — tahrirlash, deaktivatsiya, o‘chirish (o‘chirilgan xizmat nomi eski to‘lovlarda saqlanadi).
+- **Audit jurnali va kirish tarixi** (`/audit`) — xodimlarning to‘lov, tahrir, o‘chirish, ruxsat berish, yuklash va kirish amallari. **Super admin amallari va kirishlari umuman saqlanmaydi.**
+- **Shartnomalar** (`/contracts`) — shartnoma fayli bilan birga mijozlar ro‘yxati (Excel `.xlsx/.xls/.csv` yoki Word `.docx` jadval) yuklanadi. Tizim ustunlarni (F.I.O yoki Familiya/Ism/Otasining ismi, Telefon, Tug‘ilgan yili/sanasi, Lavozim, Manzil) avtomatik aniqlaydi, mijozlarni bemorlar bazasidagi mavjud bemorga bog‘laydi yoki yangisini yaratadi va shartnomaga biriktiradi.
+- **Kafolat xatlari** — namuna (shablon) va kafolat xatlarini faqat `GUARANTEE_LETTERS_UPLOAD` ruxsati bor (super admin yoki u vakolat bergan shaxs ruxsat bergan) xodim yuklaydi.
+- **Registratura / Kassa** — shartnoma asosida kelgan mijoz mavjud bemorlar orasidan qidiriladi (shartnoma belgisi bilan), xizmat(lar) tanlanadi va «Shartnoma asosida» to‘lov turi bilan (summa 0 bo‘lishi mumkin) kerakli laboratoriya bo‘limiga yo‘naltiriladi.
+- **To‘lovni tahrirlash** — ortiqcha yoki noto‘g‘ri to‘lovda summa, tur, xizmatlar tuzatiladi; sabab majburiy, eski qiymat audit jurnalida qoladi.
+- **Kunni yopish** (`/day-close`) — kun to‘lovlari tur/bo‘lim/shartnoma bo‘yicha filtrlanadi, kerakli to‘lovlar belgilanib Excelga yuklanadi, kun yopiladi. Yopilgan kunning to‘lovlarini o‘zgartirib bo‘lmaydi (super admin qayta ochishi mumkin).
+- **Aloqa paneli** — super admin `/admin` sahifasida Telegram, Instagram, telefon yoki matn kiritsa, u har bir sahifaning eng yuqorisida ko‘rinadi.
 
-The server API uses Prisma for patient and payment CRUD, search, import, filtering, deletion, statistics, and permission-protected Excel reports. Authentication uses database-backed sessions, scrypt password hashing, an opaque HttpOnly cookie, login throttling, and server-side role checks. Passwords are never stored in plain text; a keyed fingerprint is used only to reject duplicate passwords without making them recoverable.
+## Serverga o‘rnatish
 
-Super admins can import patient data from the **Bemorlar** page using `.xlsx`, `.xls`, `.csv`, or `.txt` files. The first worksheet is read automatically; columns containing `ism`, `familiya`, `name`, `telefon`, `phone`, `tugilgan yili`, `year`, `manzil`, or `address` are recognized. Rows without a name and duplicate name/phone pairs are skipped, and the import response reports added and skipped rows. The upload is server-side validated and is available only to `SUPER_ADMIN`.
+### 1-variant: Docker (tavsiya etiladi)
 
-The interface includes a language selector for Uzbek, English, and Russian. Patient duplicate detection uses the complete identity tuple: normalized full name, phone number, and birth year. Passwords may be reused by different users; they remain scrypt-hashed, and changing credentials always requires the current password.
+```sh
+cp .env.example .env        # POSTGRES_PASSWORD, NUXT_SESSION_SECRET, BOOTSTRAP_ADMIN_TOKEN ni to‘ldiring
+docker compose up -d --build
+```
 
-Clinic workflow modules now include reception/queue statuses (`WAITING`, `IN_PROGRESS`, `COMPLETED`, `CANCELLED`), doctors, services, appointment history, payment methods (`CASH`, `CARD`, `TRANSFER`), and a super-admin permission matrix. The `/reception` page manages the queue, while `/admin` lets the super admin assign permissions in a Telegram-style matrix. The cashier can select one or more seeded laboratory analyses during payment; each payment keeps those selections in the database. Department workstations can open `/department/BAKTERIOLOGIYA`, `/department/PARAZITOLOGIYA`, `/department/VIRUSOLOGIYA`, or `/department/SAN_MINIMUM` to see only patients routed to that department and their analyses. Apply the additive schema with `npx prisma db push` before first use of these modules.
+Ilova `127.0.0.1:3000` da ishlaydi; `deploy/nginx.conf` ni nginx ga qo‘ying va `certbot --nginx` bilan HTTPS yoqing. HTTPS bo‘lmasa `.env` da `COOKIE_SECURE=false` qiling.
 
-There is no hardcoded or displayed default super-admin credential. After `prisma:push`, set unique random `NUXT_SESSION_SECRET`, `BOOTSTRAP_ADMIN_TOKEN`, `BOOTSTRAP_ADMIN_USERNAME`, and `BOOTSTRAP_ADMIN_PASSWORD` values, then call `POST /api/auth/bootstrap` once with `x-bootstrap-token` and the chosen credentials to create the only `SUPER_ADMIN`; the endpoint is permanently closed once any user exists. Admin password resets are performed only by the super admin and force a change on next login. The `PATIENTS_NAME_EDIT` permission should be granted only to cashier/operator accounts (super admin always bypasses permission checks). Export reports with `GET /api/reports/payments?from=YYYY-MM-DD&to=YYYY-MM-DD` (ADMIN or SUPER_ADMIN).
+### 2-variant: Node.js 20+ va PM2
 
-## Deploy to Vercel
+```sh
+npm ci
+npm run prisma:push        # sxemani bazaga qo‘llash (mavjud ma’lumotlar saqlanadi)
+npm run build
+pm2 start deploy/ecosystem.config.cjs
+```
 
-1. Push this branch to GitHub and import the repository in Vercel.
-2. Keep the detected framework as **Nuxt.js**. The checked-in `vercel.json` uses `npm install` and `npm run build`.
-3. Deploy without committing `.env`; add `DATABASE_URL`, `DIRECT_URL`, and `NUXT_SESSION_SECRET` in Vercel's project settings.
-4. Run `npm run prisma:push` locally against the Supabase database before using the deployed app (or apply the equivalent reviewed migration).
+### Birinchi super admin
 
-`DATABASE_URL` should use Supabase's pooled connection string on port `6543` with `?pgbouncer=true`; `DIRECT_URL` should use the direct database connection on port `5432` for Prisma schema operations. Never put either credential in source control.
+Baza bo‘sh bo‘lsa, bir marta:
 
-Validation commands:
+```sh
+curl -X POST https://kassa.example.uz/api/auth/bootstrap \
+  -H "x-bootstrap-token: $BOOTSTRAP_ADMIN_TOKEN" -H "content-type: application/json" \
+  -d '{"username":"admin","password":"kamida-12-belgili-parol"}'
+```
+
+Keyin super admin bilan kiring → **Super admin** sahifasida rollarni yarating → **Xodimlar**da xodim qo‘shib, rol biriktiring.
+
+### Vercel / Supabase
+
+`vercel.json` saqlangan. Vercel'da `DATABASE_URL`, `DIRECT_URL`, `NUXT_SESSION_SECRET` ni sozlang va `npm run prisma:push` ni lokal ishga tushiring. Vercel so‘rov hajmi 4.5 MB bilan cheklangan, shuning uchun katta shartnoma fayllari uchun o‘z serveringiz yaxshiroq.
+
+## Texnik eslatmalar
+
+- Fayllar (shartnoma, kafolat xati) PostgreSQL ichida saqlanadi — alohida fayl ombori kerak emas. Bitta fayl 15 MB gacha.
+- Eski `.doc` formati o‘qilmaydi — ro‘yxatni `.docx` yoki Excel ko‘rinishida saqlang.
+- Sxema o‘zgarishlari faqat qo‘shimcha (additive): mavjud bazaga `prisma db push` ma’lumot yo‘qotmasdan qo‘llanadi.
+- Vaqt mintaqasi `APP_TZ_OFFSET_MINUTES` (standart 300 = Toshkent) — «bugun», kunni yopish va hisobotlar shu bo‘yicha.
+
+Validation:
 
 ```sh
 npm run typecheck

@@ -1,16 +1,10 @@
 import { prisma } from '../../utils/prisma'
 import { requirePermission } from '../../utils/auth'
 
-function startOfDay(date: Date) {
-  const value = new Date(date)
-  value.setHours(0, 0, 0, 0)
-  return value
-}
+import { dayStart, localDateString } from '../../utils/dates'
 
-function periodStart(date: Date, days: number) {
-  const value = startOfDay(date)
-  value.setDate(value.getDate() - days)
-  return value
+function periodStart(days: number) {
+  return new Date(dayStart(localDateString()).getTime() - days * 24 * 60 * 60 * 1000)
 }
 
 async function totals(from: Date, doctorId?: number | null) {
@@ -24,15 +18,17 @@ async function totals(from: Date, doctorId?: number | null) {
 
 export default defineEventHandler(async (event) => {
   const user = await requirePermission(event, 'REPORTS_DAILY')
-  const now = new Date()
+  const today = localDateString()
+  const monthStart = dayStart(`${today.slice(0, 7)}-01`)
+  const yearStart = dayStart(`${today.slice(0, 4)}-01-01`)
   const [daily, weekly, monthly, yearly, departmentStats] = await Promise.all([
-    totals(startOfDay(now), user.doctorId),
-    totals(periodStart(now, 7), user.doctorId),
-    totals(new Date(now.getFullYear(), now.getMonth(), 1), user.doctorId),
-    totals(new Date(now.getFullYear(), 0, 1), user.doctorId),
+    totals(dayStart(today), user.doctorId),
+    totals(periodStart(7), user.doctorId),
+    totals(monthStart, user.doctorId),
+    totals(yearStart, user.doctorId),
     prisma.payment.groupBy({
       by: ['department'],
-      where: { createdAt: { gte: new Date(now.getFullYear(), now.getMonth(), 1) }, ...(user.doctorId ? { doctorId: user.doctorId } : {}) },
+      where: { createdAt: { gte: monthStart }, ...(user.doctorId ? { doctorId: user.doctorId } : {}) },
       _sum: { amount: true },
       _count: { _all: true }
     })

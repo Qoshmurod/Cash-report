@@ -11,7 +11,8 @@ const messages: Record<Language, Record<string, string>> = {
     action: 'Amal', added: 'Qo‘shildi', skipped: 'O‘tkazib yuborildi'
     ,today: 'Bugun', week: 'Bu hafta', month: 'Bu oy', year: 'Bu yil',
     newPayment: 'Yangi to‘lov', paymentHistory: 'To‘lovlar tarixi', search: 'Qidirish',
-    from: 'Dan', to: 'Gacha', department: 'Bo‘lim', all: 'Barchasi', total: 'Jami'
+    from: 'Dan', to: 'Gacha', department: 'Bo‘lim', all: 'Barchasi', total: 'Jami',
+    reception: 'Qabul', departments: 'Bo‘limlar', contracts: 'Shartnomalar', dayClose: 'Kunni yopish', catalog: 'Xizmatlar', staff: 'Xodimlar', grants: 'Ruxsatlar', audit: 'Audit', superAdmin: 'Super admin'
   },
   en: {
     clinic: 'Clinic Cashier', cash: 'Cash desk', patients: 'Patients', logout: 'Log out',
@@ -23,7 +24,8 @@ const messages: Record<Language, Record<string, string>> = {
     action: 'Actions', added: 'Added', skipped: 'Skipped'
     ,today: 'Today', week: 'This week', month: 'This month', year: 'This year',
     newPayment: 'New payment', paymentHistory: 'Payment history', search: 'Search',
-    from: 'From', to: 'To', department: 'Department', all: 'All', total: 'Total'
+    from: 'From', to: 'To', department: 'Department', all: 'All', total: 'Total',
+    reception: 'Reception', departments: 'Departments', contracts: 'Contracts', dayClose: 'Close day', catalog: 'Services', staff: 'Staff', grants: 'Permissions', audit: 'Audit', superAdmin: 'Super admin'
   },
   ru: {
     clinic: 'Касса клиники', cash: 'Касса', patients: 'Пациенты', logout: 'Выйти',
@@ -35,13 +37,14 @@ const messages: Record<Language, Record<string, string>> = {
     action: 'Действия', added: 'Добавлено', skipped: 'Пропущено'
     ,today: 'Сегодня', week: 'Эта неделя', month: 'Этот месяц', year: 'Этот год',
     newPayment: 'Новый платёж', paymentHistory: 'История платежей', search: 'Поиск',
-    from: 'С', to: 'По', department: 'Отделение', all: 'Все', total: 'Итого'
+    from: 'С', to: 'По', department: 'Отделение', all: 'Все', total: 'Итого',
+    reception: 'Регистратура', departments: 'Отделения', contracts: 'Договоры', dayClose: 'Закрыть день', catalog: 'Услуги', staff: 'Сотрудники', grants: 'Права', audit: 'Аудит', superAdmin: 'Супер админ'
   }
 }
 
 export function useI18n() {
   const language = useState<Language>('language', () => 'uz')
-  const t = (key: string) => messages[language.value][key] || messages.uz[key] || key
+  const t = (key: string) => messages[language.value as Language][key] || messages.uz[key] || key
   return { language, t, languages: [
     { value: 'uz' as const, label: 'O‘zbekcha' },
     { value: 'en' as const, label: 'English' },
