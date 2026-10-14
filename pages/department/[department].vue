@@ -17,6 +17,12 @@ async function load() {
   }
 }
 // Only analyses belonging to this department are shown for each patient.
+// Amount belonging to this department: its own service lines, or the whole payment for older/unpriced records.
+const amountFor = (payment: any) => {
+  const own = (payment.paymentServices || []).filter((item: any) => item.service.department === department.value).reduce((sum: number, item: any) => sum + (item.amount || 0), 0)
+  return own || payment.amount
+}
+const total = computed(() => payments.value.reduce((sum: number, payment: any) => sum + amountFor(payment), 0))
 const services = (payment: any) => payment.paymentServices?.filter((item: any) => item.service.department === department.value).map((item: any) => item.service.name).join(', ') || payment.service || '—'
 watch(date, load)
 usePolling(load, 15000)
@@ -32,16 +38,18 @@ onMounted(load)
     <p class="muted">Kassa/registratura shu bo‘limga yo‘naltirgan bemorlar va analizlar.</p>
     <p v-if="error" class="error">{{ error }}</p>
     <table class="table">
-      <thead><tr><th>Vaqt</th><th>Bemor</th><th>Telefon</th><th>Analiz/xizmat</th><th>Asos</th></tr></thead>
+      <thead><tr><th>Vaqt</th><th>Bemor</th><th>Telefon</th><th>Analiz/xizmat</th><th>Summa</th><th>Asos</th></tr></thead>
       <tbody>
         <tr v-for="payment in payments" :key="payment.id">
           <td>{{ formatDate(payment.createdAt) }}</td>
           <td><strong>{{ payment.patient.fullName }}</strong></td>
           <td>{{ payment.patient.phone || '—' }}</td>
           <td>{{ services(payment) }}</td>
+          <td><strong>{{ formatSum(amountFor(payment)) }}</strong><div v-if="amountFor(payment) !== payment.amount" class="muted">to‘lov jami: {{ formatSum(payment.amount) }}</div></td>
           <td><span v-if="payment.contract" class="badge blue">Shartnoma №{{ payment.contract.number }}</span><span v-else class="badge green">To‘langan</span></td>
         </tr>
-        <tr v-if="!payments.length"><td colspan="5" class="empty">Bu bo‘lim uchun bemorlar topilmadi</td></tr>
+        <tr v-if="payments.length" class="total-row"><td colspan="4">Jami: {{ payments.length }} ta bemor</td><td colspan="2"><strong>{{ formatSum(total) }}</strong></td></tr>
+        <tr v-if="!payments.length"><td colspan="6" class="empty">Bu bo‘lim uchun bemorlar topilmadi</td></tr>
       </tbody>
     </table>
   </div>
