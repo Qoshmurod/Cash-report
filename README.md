@@ -22,7 +22,7 @@ Nuxt 3 clinic cashier and patient-management app backed by Prisma and PostgreSQL
 Docker Desktop o‘rnatilgan bo‘lsa:
 
 ```sh
-git clone -b claude/quirky-hypatia-exc0rj https://github.com/Qoshmurod/Cash-report.git
+git clone https://github.com/Qoshmurod/Cash-report.git
 cd Cash-report
 copy .env.demo .env          # Mac/Linux: cp .env.demo .env
 docker compose up -d --build
@@ -40,14 +40,14 @@ Resurs sarfi (o‘lchangan): bo‘sh turganda dastur ~20–40 MB, PostgreSQL ~40
 
 ```sh
 sudo apt-get update && sudo apt-get install -y git
-git clone -b claude/quirky-hypatia-exc0rj https://github.com/Qoshmurod/Cash-report.git
+git clone https://github.com/Qoshmurod/Cash-report.git
 cd Cash-report
 sudo bash deploy/install.sh                                  # http://SERVER_IP
 # yoki domen va HTTPS bilan:
 sudo bash deploy/install.sh kassa.example.uz siz@gmail.com
 ```
 
-Skript Docker, PostgreSQL, nginx (va domen berilsa HTTPS) ni o‘rnatadi, maxfiy kalitlarni avtomatik yaratadi, birinchi super adminni yaratib login/parolni ekranga chiqaradi (`/root/klinika-admin.txt` da ham saqlanadi). Qayta ishga tushirish xavfsiz. PR `main` ga qo‘shilgandan keyin `-b ...` qismini olib tashlang.
+Skript Docker, PostgreSQL, nginx (va domen berilsa HTTPS) ni o‘rnatadi, maxfiy kalitlarni avtomatik yaratadi, birinchi super adminni yaratib login/parolni ekranga chiqaradi (`/root/klinika-admin.txt` da ham saqlanadi). Qayta ishga tushirish xavfsiz.
 
 Yangilash: `git pull && sudo docker compose up -d --build`. Zaxira nusxa: `sudo docker compose exec db pg_dump -U kassa kassa > backup.sql`.
 
