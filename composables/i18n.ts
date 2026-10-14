@@ -1,4 +1,4 @@
-type Language = 'uz' | 'en' | 'ru'
+type Language = 'uz' | 'en' | 'ru' | 'tr'
 
 const messages: Record<Language, Record<string, string>> = {
   uz: {
@@ -39,15 +39,41 @@ const messages: Record<Language, Record<string, string>> = {
     newPayment: 'Новый платёж', paymentHistory: 'История платежей', search: 'Поиск',
     from: 'С', to: 'По', department: 'Отделение', all: 'Все', total: 'Итого',
     reception: 'Регистратура', departments: 'Отделения', contracts: 'Договоры', dayClose: 'Закрыть день', catalog: 'Услуги', staff: 'Сотрудники', grants: 'Права', audit: 'Аудит', superAdmin: 'Супер админ'
+  },
+  tr: {
+    clinic: 'Klinik Kasası', cash: 'Kasa', patients: 'Hastalar', logout: 'Çıkış',
+    loginTitle: 'Hesabınıza giriş yapın', username: 'Kullanıcı adı', password: 'Şifre',
+    login: 'Giriş', loading: 'Bekleyin...', loginError: 'Giriş başarısız',
+    patientBase: 'Hasta veritabanı', import: 'Excel/CSV içe aktar', template: 'Şablon',
+    newPatient: 'Yeni hasta', filter: 'Filtrele', noPatients: 'Hasta bulunamadı',
+    name: 'Ad Soyad', phone: 'Telefon', birthYear: 'Doğum yılı', address: 'Adres',
+    action: 'İşlem', added: 'Eklendi', skipped: 'Atlandı',
+    today: 'Bugün', week: 'Bu hafta', month: 'Bu ay', year: 'Bu yıl',
+    newPayment: 'Yeni ödeme', paymentHistory: 'Ödeme geçmişi', search: 'Ara',
+    from: 'Başlangıç', to: 'Bitiş', department: 'Bölüm', all: 'Tümü', total: 'Toplam',
+    reception: 'Kabul', departments: 'Bölümler', contracts: 'Sözleşmeler', dayClose: 'Gün sonu', catalog: 'Hizmetler', staff: 'Personel', grants: 'Yetkiler', audit: 'Denetim', superAdmin: 'Süper admin'
   }
 }
 
 export function useI18n() {
-  const language = useState<Language>('language', () => 'uz')
+  const language = useState<Language>('language', () => {
+    // Remember the chosen language per browser.
+    if (import.meta.client) {
+      try {
+        const saved = localStorage.getItem('language') as Language | null
+        if (saved && saved in messages) return saved
+      } catch {}
+    }
+    return 'uz'
+  })
+  if (import.meta.client) {
+    watch(language, (value) => { try { localStorage.setItem('language', value) } catch {} })
+  }
   const t = (key: string) => messages[language.value as Language][key] || messages.uz[key] || key
   return { language, t, languages: [
     { value: 'uz' as const, label: 'O‘zbekcha' },
     { value: 'en' as const, label: 'English' },
-    { value: 'ru' as const, label: 'Русский' }
+    { value: 'ru' as const, label: 'Русский' },
+    { value: 'tr' as const, label: 'Türkçe' }
   ] }
 }
