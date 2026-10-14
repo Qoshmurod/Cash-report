@@ -61,12 +61,16 @@ function onSearchInput() {
 }
 
 function selectPatient(p: any) {
+  const query = searchQuery.value.trim().toLowerCase()
   selectedPatient.value = p
   form.patientId = p.id
   searchQuery.value = ''
   searchResults.value = []
   const active = (p.contractClients || []).map((item: any) => item.contract).filter((c: any) => c.active)
-  if (active.length) { form.method = 'CONTRACT'; form.contractId = active[0].id }
+  // Prefer the contract the registrar searched for (by number or organization).
+  const searched = active.find((c: any) => c.number.toLowerCase() === query)
+    || active.find((c: any) => query && (c.number.toLowerCase().includes(query) || c.organization.toLowerCase().includes(query)))
+  if (active.length) { form.method = 'CONTRACT'; form.contractId = (searched || active[0]).id }
 }
 function clearPatient() {
   selectedPatient.value = null
@@ -231,9 +235,9 @@ onMounted(async () => {
     <div v-if="can('PAYMENTS_CREATE')" class="card" style="margin-top: 24px">
       <h2>💵 {{ t('newPayment') }}</h2>
       <div v-if="!selectedPatient" class="patient-search">
-        <label class="search-label">1️⃣ Bemor izlash (ism yoki telefon). Shartnoma asosida kelgan mijozlar ham shu yerdan topiladi</label>
+        <label class="search-label">1️⃣ Bemor izlash: ism, telefon, shartnoma raqami yoki tashkilot nomi</label>
         <div class="search-box">
-          <input v-model="searchQuery" type="text" placeholder="Masalan: Karimov yoki 901234567" @input="onSearchInput" />
+          <input v-model="searchQuery" type="text" placeholder="Masalan: Karimov, 901234567 yoki 12/2026" @input="onSearchInput" />
           <button class="btn secondary" @click="showNewPatientModal = true">➕ Yangi bemor</button>
         </div>
         <div v-if="searching" class="search-hint">Qidirilmoqda...</div>

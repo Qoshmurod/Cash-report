@@ -143,7 +143,7 @@ onMounted(load)
     <div class="filters">
       <div class="field">
         <label>Qidirish</label>
-        <input v-model="filter.search" type="text" placeholder="Ism yoki telefon" />
+        <input v-model="filter.search" type="text" placeholder="Ism, telefon yoki shartnoma raqami" />
       </div>
       <div class="field">
         <label>Dan</label>

@@ -9,7 +9,11 @@ export default defineEventHandler(async (event) => {
   const page = Math.max(1, Number(query.page) || 1)
   const createdAt = parseRange(query.from, query.to)
   const where = {
-    ...(search ? { OR: [{ fullName: { contains: search, mode: 'insensitive' as const } }, { phone: { contains: search } }] } : {}),
+    ...(search ? { OR: [
+      { fullName: { contains: search, mode: 'insensitive' as const } },
+      { phone: { contains: search } },
+      { contractClients: { some: { contract: { OR: [{ number: { contains: search, mode: 'insensitive' as const } }, { organization: { contains: search, mode: 'insensitive' as const } }] } } } }
+    ] } : {}),
     ...(createdAt ? { createdAt } : {})
   }
   const [patients, total] = await Promise.all([

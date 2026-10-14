@@ -56,8 +56,8 @@ onMounted(async () => {
       <h1>📋 Qabul va navbat</h1>
       <p class="muted">Shartnoma asosida kelgan mijozni mavjud bemorlar orasidan izlang va kerakli xizmatga yo‘naltiring. To‘lov/shartnoma bo‘yicha rasmiylashtirish Kassa bo‘limida.</p>
       <div v-if="!selected" class="field">
-        <label>Bemor izlash (ism yoki telefon)</label>
-        <input v-model="query" placeholder="Karimov yoki 901234567" @input="onSearch" />
+        <label>Bemor izlash: ism, telefon, shartnoma raqami yoki tashkilot nomi</label>
+        <input v-model="query" placeholder="Karimov, 901234567 yoki 12/2026" @input="onSearch" />
         <div v-for="p in results" :key="p.id" class="search-item" @click="choose(p)">
           <strong>{{ p.fullName }}</strong> <span class="muted">{{ p.phone }} {{ p.birthYear }}</span>
           <span v-for="c in p.contractClients" :key="c.contract.id" class="badge blue">📄 №{{ c.contract.number }} {{ c.contract.organization }}</span>
