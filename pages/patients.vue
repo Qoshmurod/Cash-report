@@ -114,7 +114,7 @@ async function onFileChange(e: Event) {
 }
 
 function downloadTemplate() {
-  const csv = 'Ism-familiya;Telefon;Tugilgan yili;Manzil\nKarimov Ali;+998901234567;1990;Muborak\n'
+  const csv = 'Ism-familiya;Telefon;Tugilgan yili;Manzil\n'
   const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8' })
   const url = URL.createObjectURL(blob)
   const a = document.createElement('a')

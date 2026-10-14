@@ -237,7 +237,7 @@ onMounted(async () => {
       <div v-if="!selectedPatient" class="patient-search">
         <label class="search-label">1️⃣ Bemor izlash: ism, telefon, shartnoma raqami yoki tashkilot nomi</label>
         <div class="search-box">
-          <input v-model="searchQuery" type="text" placeholder="Masalan: Karimov, 901234567 yoki 12/2026" @input="onSearchInput" />
+          <input v-model="searchQuery" type="text" placeholder="Familiya, telefon yoki shartnoma raqami" @input="onSearchInput" />
           <button class="btn secondary" @click="showNewPatientModal = true">➕ Yangi bemor</button>
         </div>
         <div v-if="searching" class="search-hint">Qidirilmoqda...</div>
@@ -328,7 +328,7 @@ onMounted(async () => {
     <div v-if="can('PAYMENTS_VIEW')" class="card" style="margin-top: 24px">
       <h2>📋 {{ t('paymentHistory') }}</h2>
       <div class="filters">
-        <div class="field"><label>{{ t('search') }}</label><input v-model="filter.search" type="text" placeholder="Karimov" /></div>
+        <div class="field"><label>{{ t('search') }}</label><input v-model="filter.search" type="text" placeholder="Familiya" /></div>
         <div class="field"><label>{{ t('from') }}</label><input v-model="filter.from" type="date" /></div>
         <div class="field"><label>{{ t('to') }}</label><input v-model="filter.to" type="date" /></div>
         <div class="field">
