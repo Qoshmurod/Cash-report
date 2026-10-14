@@ -19,7 +19,24 @@ Nuxt 3 clinic cashier and patient-management app backed by Prisma and PostgreSQL
 
 ## Serverga o‘rnatish
 
-### 1-variant: Docker (tavsiya etiladi)
+### Ubuntu VPS — bitta buyruq (tavsiya etiladi)
+
+Talab: Ubuntu 22.04 / 24.04 / 26.04, kamida 2 GB RAM (4 GB tavsiya), 10 GB disk.
+
+```sh
+sudo apt-get update && sudo apt-get install -y git
+git clone -b claude/quirky-hypatia-exc0rj https://github.com/Qoshmurod/Cash-report.git
+cd Cash-report
+sudo bash deploy/install.sh                                  # http://SERVER_IP
+# yoki domen va HTTPS bilan:
+sudo bash deploy/install.sh kassa.example.uz siz@gmail.com
+```
+
+Skript Docker, PostgreSQL, nginx (va domen berilsa HTTPS) ni o‘rnatadi, maxfiy kalitlarni avtomatik yaratadi, birinchi super adminni yaratib login/parolni ekranga chiqaradi (`/root/klinika-admin.txt` da ham saqlanadi). Qayta ishga tushirish xavfsiz. PR `main` ga qo‘shilgandan keyin `-b ...` qismini olib tashlang.
+
+Yangilash: `git pull && sudo docker compose up -d --build`. Zaxira nusxa: `sudo docker compose exec db pg_dump -U kassa kassa > backup.sql`.
+
+### Qo‘lda: Docker
 
 ```sh
 cp .env.example .env        # POSTGRES_PASSWORD, NUXT_SESSION_SECRET, BOOTSTRAP_ADMIN_TOKEN ni to‘ldiring
@@ -28,7 +45,7 @@ docker compose up -d --build
 
 Ilova `127.0.0.1:3000` da ishlaydi; `deploy/nginx.conf` ni nginx ga qo‘ying va `certbot --nginx` bilan HTTPS yoqing. HTTPS bo‘lmasa `.env` da `COOKIE_SECURE=false` qiling.
 
-### 2-variant: Node.js 20+ va PM2
+### Qo‘lda: Node.js 20.6+ va PM2
 
 ```sh
 npm ci
