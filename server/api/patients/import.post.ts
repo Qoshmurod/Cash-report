@@ -9,6 +9,9 @@ export default defineEventHandler(async (event) => {
   let sourceRows: unknown[] = []
 
   if (contentType.includes('multipart/form-data')) {
+    if (Number(getHeader(event, 'content-length') || 0) > 16 * 1024 * 1024) {
+      throw createError({ statusCode: 413, statusMessage: 'Fayl hajmi 15 MB dan oshmasin' })
+    }
     const parts = await readMultipartFormData(event)
     const file = parts?.find((part) => part.name === 'file' && part.data)
     if (!file?.data) throw createError({ statusCode: 400, statusMessage: 'Excel fayl tanlanmagan' })

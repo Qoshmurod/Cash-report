@@ -36,7 +36,7 @@ docker compose up -d --build
 
 Talab: Ubuntu 22.04 / 24.04 / 26.04, 2 GB RAM (+ skript yaratadigan 2 GB swap), 5 GB disk.
 
-Resurs sarfi (o‘lchangan): bo‘sh turganda dastur ~20–40 MB, PostgreSQL ~40 MB RAM, CPU ~0%. 300 ta to‘lov / 200 qidiruv yuklamasida eng ko‘pi ~60 MB + ~45 MB. Konteynerlar xotira chegarasi: dastur 320 MB, baza 256 MB — 4 GB serverda yana bir xuddi shunday dastur bemalol ishlaydi (ikkinchi nusxa uchun `.env` da `APP_PORT=3001` qo‘ying va boshqa papkaga klon qiling).
+Resurs sarfi (o‘lchangan): bo‘sh turganda dastur ~20–40 MB, PostgreSQL ~40 MB RAM, CPU ~0%. 300 ta to‘lov / 200 qidiruv yuklamasida eng ko‘pi ~60 MB + ~45 MB. Konteynerlar xotira chegarasi (faqat yuqori chegara, oldindan band qilinmaydi): dastur 768 MB, baza 512 MB — odatda ikkalasi birga ~100 MB ishlatadi, shuning uchun 4 GB serverda yana bir xuddi shunday dastur bemalol ishlaydi (ikkinchi nusxa uchun `.env` da `APP_PORT=3001` qo‘ying va boshqa papkaga klon qiling).
 
 ```sh
 sudo apt-get update && sudo apt-get install -y git

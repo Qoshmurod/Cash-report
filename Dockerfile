@@ -17,7 +17,7 @@ RUN npm init -y >/dev/null && npm install --no-audit --no-fund prisma@6.19.3 xls
 FROM node:20-alpine
 WORKDIR /app
 ENV NODE_ENV=production PORT=3000 NUXT_TELEMETRY_DISABLED=1 \
-    NODE_OPTIONS="--max-old-space-size=192"
+    NODE_OPTIONS="--max-old-space-size=512"
 COPY --from=migrate /m/node_modules ./node_modules
 COPY --from=build /app/prisma ./prisma
 COPY --from=build /app/.output ./.output

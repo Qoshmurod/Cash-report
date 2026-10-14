@@ -1,5 +1,6 @@
 # Usage: cp .env.example .env (fill secrets), then: docker compose up -d --build
-# Tuned for small VPS: whole stack stays well under 512 MB RAM.
+# Tuned for small VPS: ~60-100 MB RAM in normal use. The limits below are only ceilings
+# (nothing is reserved), set high enough for large Excel/Word imports.
 x-logging: &logging
   driver: json-file
   options: { max-size: "10m", max-file: "3" }
@@ -15,9 +16,9 @@ services:
     # Small-memory PostgreSQL profile (clinic workload: few users, small tables).
     command: >
       postgres
-      -c shared_buffers=48MB
-      -c effective_cache_size=192MB
-      -c work_mem=2MB
+      -c shared_buffers=64MB
+      -c effective_cache_size=256MB
+      -c work_mem=4MB
       -c maintenance_work_mem=32MB
       -c max_connections=20
       -c max_wal_size=256MB
@@ -30,7 +31,7 @@ services:
       -c autovacuum_max_workers=1
       -c log_min_duration_statement=2000
     shm_size: 64m
-    mem_limit: 256m
+    mem_limit: 512m
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
@@ -55,8 +56,7 @@ services:
       BOOTSTRAP_ADMIN_PASSWORD: ${BOOTSTRAP_ADMIN_PASSWORD:-}
       COOKIE_SECURE: ${COOKIE_SECURE:-true}
       APP_TZ_OFFSET_MINUTES: ${APP_TZ_OFFSET_MINUTES:-300}
-    mem_limit: 320m
-    cpus: 1.0
+    mem_limit: 768m
     ports:
       - "127.0.0.1:${APP_PORT:-3000}:3000"
     logging: *logging

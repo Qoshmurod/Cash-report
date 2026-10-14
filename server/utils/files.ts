@@ -6,6 +6,11 @@ export const MAX_FILE_BYTES = 15 * 1024 * 1024
 export type UploadedFile = { filename: string; type: string; data: Uint8Array<ArrayBuffer> }
 
 export async function readUpload(event: any) {
+  // Refuse oversized requests before buffering them, so a huge file cannot exhaust memory.
+  const declared = Number(getHeader(event, 'content-length') || 0)
+  if (declared > MAX_FILE_BYTES * 2 + 1024 * 1024) {
+    throw createError({ statusCode: 413, statusMessage: 'Fayl hajmi 15 MB dan oshmasin' })
+  }
   const parts = await readMultipartFormData(event)
   if (!parts) throw createError({ statusCode: 400, statusMessage: 'Fayl yuborilmagan' })
   const fields: Record<string, string> = {}
