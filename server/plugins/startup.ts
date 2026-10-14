@@ -1,5 +1,6 @@
 import { prisma } from '../utils/prisma'
 import { PERMISSIONS } from '../utils/catalog'
+import { hashPassword, passwordFingerprint } from '../utils/auth'
 import { SERVICE_CATALOG } from '../utils/service-catalog'
 
 // Idempotent data upgrades that run once per server start.
@@ -20,6 +21,15 @@ export default defineNitroPlugin(() => {
           skipDuplicates: true
         })
         await prisma.setting.create({ data: { key: 'serviceCatalogSeeded', value: true } })
+      }
+      // Demo convenience: explicit opt-in only, and only while no user exists yet.
+      const username = String(process.env.BOOTSTRAP_ADMIN_USERNAME || '').trim().toLowerCase()
+      const password = String(process.env.BOOTSTRAP_ADMIN_PASSWORD || '')
+      if (process.env.AUTO_CREATE_ADMIN === 'true' && username && password && await prisma.user.count() === 0) {
+        await prisma.user.create({
+          data: { username, passwordHash: await hashPassword(password), passwordFingerprint: passwordFingerprint(password), role: 'SUPER_ADMIN' }
+        })
+        console.log(`Demo super admin created: ${username}`)
       }
     } catch (error) {
       console.error('startup data upgrade failed', error)

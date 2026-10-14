@@ -17,6 +17,19 @@ Nuxt 3 clinic cashier and patient-management app backed by Prisma and PostgreSQL
 - **Kunni yopish** (`/day-close`) — kun to‘lovlari tur/bo‘lim/shartnoma bo‘yicha filtrlanadi, kerakli to‘lovlar belgilanib Excelga yuklanadi, kun yopiladi. Yopilgan kunning to‘lovlarini o‘zgartirib bo‘lmaydi (super admin qayta ochishi mumkin).
 - **Aloqa paneli** — super admin `/admin` sahifasida Telegram, Instagram, telefon yoki matn kiritsa, u har bir sahifaning eng yuqorisida ko‘rinadi.
 
+## O‘z kompyuteringizda sinash (demo)
+
+Docker Desktop o‘rnatilgan bo‘lsa:
+
+```sh
+git clone -b claude/quirky-hypatia-exc0rj https://github.com/Qoshmurod/Cash-report.git
+cd Cash-report
+copy .env.demo .env          # Mac/Linux: cp .env.demo .env
+docker compose up -d --build
+```
+
+3–8 daqiqadan keyin `http://localhost:3000` — login `admin`, parol `demo-parol-12345`. `.env.demo` faqat sinov uchun; serverda `deploy/install.sh` o‘z maxfiy kalitlarini yaratadi.
+
 ## Serverga o‘rnatish
 
 ### Ubuntu VPS — bitta buyruq (tavsiya etiladi)
