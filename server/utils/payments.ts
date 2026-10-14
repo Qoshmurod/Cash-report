@@ -30,7 +30,7 @@ export async function parsePaymentBody(body: any) {
     throw createError({ statusCode: 400, statusMessage: 'Musbat summa kiriting' })
   }
   const selectedServices = serviceIds.length
-    ? await prisma.service.findMany({ where: { id: { in: serviceIds } }, select: { id: true, department: true } })
+    ? await prisma.service.findMany({ where: { id: { in: serviceIds } }, select: { id: true, department: true, price: true } })
     : []
   if (serviceIds.length !== selectedServices.length) throw createError({ statusCode: 400, statusMessage: 'Tanlangan xizmatlardan biri topilmadi' })
   const departments = [...new Set(selectedServices.map((service) => service.department).filter(Boolean))]
@@ -50,8 +50,10 @@ export async function parsePaymentBody(body: any) {
     if (!contract) throw createError({ statusCode: 400, statusMessage: 'Shartnoma tanlanmagan' })
     if (!contract.active) throw createError({ statusCode: 400, statusMessage: 'Shartnoma faol emas' })
   }
+  const lines = selectedServices.map((service) => ({ serviceId: service.id, amount: service.price }))
   return {
     serviceIds,
+    lines,
     data: {
       department,
       service: body?.service ? String(body.service).trim().slice(0, 300) : null,

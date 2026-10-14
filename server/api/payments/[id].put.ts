@@ -14,7 +14,7 @@ export default defineEventHandler(async (event) => {
   const body = await readBody(event)
   const reason = String(body?.reason || '').trim()
   if (!reason) throw createError({ statusCode: 400, statusMessage: 'Tahrirlash sababini kiriting' })
-  const { serviceIds, data } = await parsePaymentBody(body)
+  const { serviceIds, lines, data } = await parsePaymentBody(body)
   if (data.contractId && !await prisma.contractClient.findUnique({ where: { contractId_patientId: { contractId: data.contractId, patientId: before.patientId } } })) {
     throw createError({ statusCode: 400, statusMessage: 'Bemor ushbu shartnoma ro‘yxatida yo‘q' })
   }
@@ -22,7 +22,7 @@ export default defineEventHandler(async (event) => {
     await tx.paymentService.deleteMany({ where: { paymentId: id } })
     return tx.payment.update({
       where: { id },
-      data: { ...data, editedAt: new Date(), editReason: reason.slice(0, 500), paymentServices: serviceIds.length ? { create: serviceIds.map((serviceId) => ({ serviceId })) } : undefined },
+      data: { ...data, editedAt: new Date(), editReason: reason.slice(0, 500), paymentServices: lines.length ? { create: lines } : undefined },
       include: paymentInclude
     })
   })

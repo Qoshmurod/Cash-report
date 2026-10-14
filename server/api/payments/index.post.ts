@@ -11,7 +11,7 @@ export default defineEventHandler(async (event) => {
   const patient = await prisma.patient.findUnique({ where: { id: patientId }, select: { id: true, fullName: true } })
   if (!patient) throw createError({ statusCode: 404, statusMessage: 'Bemor topilmadi' })
   await assertDayOpen(new Date())
-  const { serviceIds, data } = await parsePaymentBody(body)
+  const { serviceIds, lines, data } = await parsePaymentBody(body)
   if (data.contractId && !await prisma.contractClient.findUnique({ where: { contractId_patientId: { contractId: data.contractId, patientId } } })) {
     throw createError({ statusCode: 400, statusMessage: 'Bemor ushbu shartnoma ro‘yxatida yo‘q' })
   }
@@ -20,7 +20,7 @@ export default defineEventHandler(async (event) => {
       ...data,
       patientId,
       createdById: user.id,
-      paymentServices: serviceIds.length ? { create: serviceIds.map((serviceId) => ({ serviceId })) } : undefined
+      paymentServices: lines.length ? { create: lines } : undefined
     },
     include: paymentInclude
   })

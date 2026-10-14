@@ -96,6 +96,8 @@ model Service {
 model PaymentService {
   paymentId Int
   serviceId Int
+  // Service price at the time of payment; used to confirm received lines at day close.
+  amount    Int     @default(0)
   payment   Payment @relation(fields: [paymentId], references: [id], onDelete: Cascade)
   service   Service @relation(fields: [serviceId], references: [id], onDelete: Restrict)
   @@id([paymentId, serviceId])
@@ -302,4 +304,20 @@ model DayClosure {
   closedById   Int?
   closedByName String
   createdAt    DateTime @default(now())
+  items        DayClosureItem[]
+}
+
+// One confirmed line of a closed day: a service of a payment (or the whole payment) and the amount received.
+model DayClosureItem {
+  id        Int        @id @default(autoincrement())
+  closureId Int
+  closure   DayClosure @relation(fields: [closureId], references: [id], onDelete: Cascade)
+  paymentId Int
+  serviceId Int?
+  label     String
+  method    String
+  amount    Int
+
+  @@index([closureId])
+  @@index([paymentId])
 }
