@@ -98,6 +98,7 @@ onMounted(loadContact)
     </header>
     <div v-if="update?.available && route.path !== '/'" class="update-bar">
       <span>🆕 Yangi versiya mavjud ({{ update.count }} ta o‘zgarish<template v-if="update.commits[0]">: {{ update.commits[0].subject }}</template>).</span>
+      <span v-if="update.lastFailed" class="update-error">⚠️ Oxirgi yangilanish bajarilmadi, eski versiya ishlayapti (log: /var/log/klinika-update.log).</span>
       <span v-if="update.requested">⏳ Yangilanish boshlandi, bir necha daqiqada tugaydi.</span>
       <template v-else>
         <span>Har kuni {{ update.updateTime }} da avtomatik o‘rnatiladi.</span>

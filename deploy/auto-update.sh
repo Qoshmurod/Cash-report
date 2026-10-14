@@ -41,13 +41,17 @@ apply() {
   if grep -q '^available=1' "$STATE/status.env"; then
     local from; from="$(git rev-parse --short HEAD)"
     echo "$(date '+%F %T') yangilanish: $from -> $(git rev-parse --short "origin/$BRANCH") (${1:-qo‘lda})"
+    local from_rev; from_rev="$(git rev-parse HEAD)"
+    # The running container is only replaced after a successful build.
     if git merge --ff-only --quiet "origin/$BRANCH" && docker compose build --quiet app && docker compose up -d; then
       echo "lastUpdate=$(date -Iseconds) $from->$(git rev-parse --short HEAD) ok" > "$STATE/last.env"
       docker image prune -f >/dev/null 2>&1 || true
       echo "$(date '+%F %T') tayyor: $(git log --oneline -1)"
     else
+      # Go back to the version that is still running, so the update stays "available" and can be retried.
+      git reset --keep --quiet "$from_rev" || true
       echo "lastUpdate=$(date -Iseconds) $from xato" > "$STATE/last.env"
-      echo "$(date '+%F %T') XATO: yangilanish bajarilmadi"
+      echo "$(date '+%F %T') XATO: yangilanish bajarilmadi, eski versiya ishlashda davom etadi"
     fi
   fi
   rm -f "$STATE/request"

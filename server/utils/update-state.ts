@@ -31,7 +31,8 @@ export async function readUpdateState() {
     updateTime: status.updateTime || '22:00',
     commits: (await readText('commits.txt')).split('\n').filter(Boolean).map((line) => ({ hash: line.slice(0, line.indexOf(' ')), subject: line.slice(line.indexOf(' ') + 1) })),
     requested: request || null,
-    lastUpdate: last.lastUpdate || null
+    lastUpdate: last.lastUpdate || null,
+    lastFailed: (last.lastUpdate || '').endsWith('xato')
   }
 }
 

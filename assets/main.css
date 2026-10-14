@@ -17,6 +17,7 @@ h2 { font-size: 1.15rem; }
 .contact-bar a:hover { color: white; text-decoration: underline; }
 .update-bar { display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center; justify-content: center; padding: 8px 16px; background: #fef3c7; color: #92400e; font-size: .9rem; }
 .update-bar .btn { margin: 0; }
+.update-error { color: #b91c1c; font-weight: 600; }
 .topbar {
   display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap;
   gap: 12px; padding: 12px 24px; background: #115e59; color: white;
