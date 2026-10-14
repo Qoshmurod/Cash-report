@@ -58,6 +58,9 @@ export const PERMISSION_GROUPS = [
   ] },
   { section: 'Audit', items: [
     ['AUDIT_VIEW', 'Audit jurnalini ko‘rish']
+  ] },
+  { section: 'Tizim', items: [
+    ['SYSTEM_UPDATE', 'Tizimni yangilash (GitHub’dagi yangi versiyani o‘rnatish)']
   ] }
 ] as const
 

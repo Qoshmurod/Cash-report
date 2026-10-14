@@ -57,6 +57,9 @@ services:
       COOKIE_SECURE: ${COOKIE_SECURE:-true}
       APP_TZ_OFFSET_MINUTES: ${APP_TZ_OFFSET_MINUTES:-300}
     mem_limit: 768m
+    volumes:
+      # Shared with deploy/auto-update.sh: update status in, "update now" requests out.
+      - ./deploy/state:/app/update-state
     ports:
       - "127.0.0.1:${APP_PORT:-3000}:3000"
     logging: *logging

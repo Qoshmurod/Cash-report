@@ -7,3 +7,4 @@ node_modules
 !.env.demo
 *.db
 *.db-journal
+deploy/state/

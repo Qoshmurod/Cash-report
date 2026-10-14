@@ -4,6 +4,7 @@ set -e
 cd "$(dirname "$0")"
 docker info >/dev/null 2>&1 || { echo "Docker ishlamayapti. Docker Desktop'ni oching (WSL: Settings > Resources > WSL integration)."; exit 1; }
 [ -f .env ] || cp .env.demo .env
+mkdir -p deploy/state
 echo "Dastur yig'ilmoqda va ishga tushmoqda (birinchi marta 3-8 daqiqa)..."
 docker compose up -d --build
 for i in $(seq 1 60); do

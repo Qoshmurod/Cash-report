@@ -1,7 +1,7 @@
 <script setup lang="ts">
 const route = useRoute()
 const { language, t, languages } = useI18n()
-const { user, refresh, navItems } = useAuth()
+const { user, refresh, navItems, can } = useAuth()
 const contact = ref<Record<string, any>>({})
 const showProfile = ref(false)
 const profile = reactive({ username: '', currentPassword: '', newPassword: '' })
@@ -52,6 +52,24 @@ const instagramLink = computed(() => {
 })
 const hasContact = computed(() => contact.value.enabled !== false && Boolean(contact.value.telegram || contact.value.instagram || contact.value.phone || contact.value.text))
 
+// New version from GitHub: shown to users allowed to install it.
+const update = ref<any>(null)
+async function loadUpdate() {
+  if (!user.value || !can('SYSTEM_UPDATE')) { update.value = null; return }
+  update.value = (await $fetch<any>('/api/system/update').catch(() => null))?.update || null
+}
+async function requestUpdate() {
+  if (!confirm(`Yangi versiya hozir o‘rnatilsinmi?\nDastur 3–8 daqiqada yangilanadi, oxirida bir necha soniya ishlamay turadi.`)) return
+  try {
+    await $fetch('/api/system/update', { method: 'POST' })
+    await loadUpdate()
+  } catch (error: any) {
+    alert(apiError(error))
+  }
+}
+watch(user, loadUpdate)
+usePolling(loadUpdate, 60000)
+
 watch(() => user.value?.mustChangePassword, (value) => { if (value) openProfile() })
 provide('reloadContact', loadContact)
 onMounted(loadContact)
@@ -78,6 +96,14 @@ onMounted(loadContact)
         <button class="nav-logout" @click="logout">{{ t('logout') }}</button>
       </div>
     </header>
+    <div v-if="update?.available && route.path !== '/'" class="update-bar">
+      <span>🆕 Yangi versiya mavjud ({{ update.count }} ta o‘zgarish<template v-if="update.commits[0]">: {{ update.commits[0].subject }}</template>).</span>
+      <span v-if="update.requested">⏳ Yangilanish boshlandi, bir necha daqiqada tugaydi.</span>
+      <template v-else>
+        <span>Har kuni {{ update.updateTime }} da avtomatik o‘rnatiladi.</span>
+        <button class="btn small" @click="requestUpdate">Hozir yangilash</button>
+      </template>
+    </div>
     <main :class="{ content: route.path !== '/' }">
       <NuxtPage />
     </main>

@@ -35,6 +35,7 @@ if [ ! -f .env ]; then
 fi
 set -a; . ./.env; set +a
 
+mkdir -p deploy/state && chown 1000:1000 deploy/state
 echo "==> 4/6 Dasturni yig'ish va ishga tushirish (birinchi marta 3-8 daqiqa)"
 docker compose up -d --build
 for i in $(seq 1 60); do
@@ -70,11 +71,13 @@ if [ "${SKIP_NGINX:-0}" != "1" ]; then
   fi
 fi
 
-echo "==> Avtomatik yangilanish (GitHub main o'zgarsa, har 5 daqiqada tekshiriladi)"
+echo "==> Yangilanish agenti (har 5 daqiqada tekshiradi; kechqurun yoki xodim so‘rovi bilan yangilaydi)"
 if [ "${SKIP_AUTO_UPDATE:-0}" != "1" ]; then
   APP_DIR="$(pwd)"
-  echo "*/5 * * * * root cd ${APP_DIR} && bash deploy/auto-update.sh >> /var/log/klinika-update.log 2>&1" > /etc/cron.d/klinika-auto-update
+  grep -q '^UPDATE_TIME=' .env || echo 'UPDATE_TIME="22:00"' >> .env
+  echo "* * * * * root cd ${APP_DIR} && bash deploy/auto-update.sh auto >> /var/log/klinika-update.log 2>&1" > /etc/cron.d/klinika-auto-update
   chmod 644 /etc/cron.d/klinika-auto-update
+  bash deploy/auto-update.sh check || true
 fi
 
 IP="$(hostname -I | awk '{print $1}')"
@@ -86,4 +89,4 @@ if [ -n "$ADMIN_PASS" ]; then
   echo "Parol:   ${ADMIN_PASS}   (/root/klinika-admin.txt da saqlandi — kirgach almashtiring)"
 fi
 echo "Loglar:  docker compose logs -f app"
-echo "Yangilanish: GitHub main ga push qilinsa 5 daqiqa ichida o'zi yangilanadi (log: /var/log/klinika-update.log)"
+echo "Yangilanish: har kuni ${UPDATE_TIME:-22:00} da yoki tizimdagi «Hozir yangilash» tugmasi bilan (log: /var/log/klinika-update.log)"
