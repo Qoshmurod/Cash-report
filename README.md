@@ -49,7 +49,7 @@ sudo bash deploy/install.sh kassa.example.uz siz@gmail.com
 
 Skript Docker, PostgreSQL, nginx (va domen berilsa HTTPS) ni o‘rnatadi, maxfiy kalitlarni avtomatik yaratadi, birinchi super adminni yaratib login/parolni ekranga chiqaradi (`/root/klinika-admin.txt` da ham saqlanadi). Qayta ishga tushirish xavfsiz.
 
-Yangilash: `git pull && sudo docker compose up -d --build`. Zaxira nusxa: `sudo docker compose exec db pg_dump -U kassa kassa > backup.sql`.
+**Avtomatik yangilanish:** `install.sh` cron vazifasini qo‘shadi — har 5 daqiqada GitHub'dagi `main` tekshiriladi, yangi commit bo‘lsa dastur o‘zi qayta yig‘ilib ishga tushadi (ma’lumotlar saqlanadi, to‘xtash bir necha soniya). Log: `/var/log/klinika-update.log`. Qo‘lda yangilash: `sudo bash deploy/auto-update.sh`. O‘chirish: `sudo rm /etc/cron.d/klinika-auto-update`. Repo private bo‘lsa, serverda `git pull` parol so‘ramasligi uchun deploy key yoki token sozlang (pastga qarang). Zaxira nusxa: `sudo docker compose exec db pg_dump -U kassa kassa > backup.sql`.
 
 ### Qo‘lda: Docker
 
@@ -81,6 +81,15 @@ curl -X POST https://kassa.example.uz/api/auth/bootstrap \
 
 Keyin super admin bilan kiring → **Super admin** sahifasida rollarni yarating → **Xodimlar**da xodim qo‘shib, rol biriktiring.
 
+
+### Private repo uchun avtomatik yangilanish
+
+GitHub → Settings → Developer settings → Fine-grained token (faqat shu repo, *Contents: Read-only*) yarating, keyin serverda:
+
+```sh
+cd Cash-report
+git remote set-url origin https://<TOKEN>@github.com/Qoshmurod/Cash-report.git
+```
 
 ## Texnik eslatmalar
 

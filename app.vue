@@ -2,14 +2,14 @@
 const route = useRoute()
 const { language, t, languages } = useI18n()
 const { user, refresh, navItems } = useAuth()
-const contact = ref<Record<string, string>>({})
+const contact = ref<Record<string, any>>({})
 const showProfile = ref(false)
 const profile = reactive({ username: '', currentPassword: '', newPassword: '' })
 const profileError = ref('')
 
 async function loadContact() {
   try {
-    contact.value = (await $fetch<{ contact: Record<string, string> }>('/api/settings/contact')).contact
+    contact.value = (await $fetch<{ contact: Record<string, any> }>('/api/settings/contact')).contact
   } catch {
     contact.value = {}
   }
@@ -50,7 +50,7 @@ const instagramLink = computed(() => {
   if (!value) return ''
   return value.startsWith('http') ? value : `https://instagram.com/${value.replace(/^@/, '')}`
 })
-const hasContact = computed(() => Boolean(contact.value.telegram || contact.value.instagram || contact.value.phone || contact.value.text))
+const hasContact = computed(() => contact.value.enabled !== false && Boolean(contact.value.telegram || contact.value.instagram || contact.value.phone || contact.value.text))
 
 watch(() => user.value?.mustChangePassword, (value) => { if (value) openProfile() })
 provide('reloadContact', loadContact)

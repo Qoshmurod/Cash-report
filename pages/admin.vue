@@ -3,7 +3,7 @@ const { departments, permissionGroups } = useMeta()
 const reloadContact = inject<() => Promise<void>>('reloadContact')
 const roles = ref<any[]>([])
 const editing = ref<any>(null)
-const contact = reactive({ telegram: '', instagram: '', phone: '', text: '' })
+const contact = reactive({ enabled: true, telegram: '', instagram: '', phone: '', text: '' })
 const saved = ref(false)
 
 async function load() {
@@ -68,7 +68,8 @@ onMounted(load)
 
     <form class="card" @submit.prevent="saveContact">
       <h2>📞 Yuqori paneldagi aloqa ma’lumotlari</h2>
-      <p class="muted">Bu ma’lumotlar har bir sahifaning eng yuqorisida (kirish sahifasida ham) ko‘rinadi. Bo‘sh qoldirilsa ko‘rsatilmaydi.</p>
+      <p class="muted">Ixtiyoriy. Yoqilgan bo‘lsa, to‘ldirilgan maydonlar har bir sahifaning eng yuqorisida (kirish sahifasida ham) ko‘rinadi. O‘chirsangiz panel yashiriladi, kiritilgan ma’lumotlar saqlanib qoladi.</p>
+      <label class="toggle"><input v-model="contact.enabled" type="checkbox" /> Yuqori panelda ko‘rsatish</label>
       <div class="grid">
         <div class="field"><label>Telegram</label><input v-model="contact.telegram" placeholder="@username yoki havola" /></div>
         <div class="field"><label>Instagram</label><input v-model="contact.instagram" placeholder="@username yoki havola" /></div>
@@ -104,3 +105,7 @@ onMounted(load)
     </div>
   </div>
 </template>
+
+<style scoped>
+.toggle { display: flex; gap: 8px; align-items: center; font-weight: 600; margin-bottom: 12px; }
+</style>

@@ -1,5 +1,4 @@
 import { PAYMENT_METHODS } from './catalog'
-import { localDateTimeString } from './dates'
 import { loadXlsx } from './lazy'
 
 const methodLabel = (value: string) => PAYMENT_METHODS.find((item) => item.value === value)?.label || value
@@ -8,7 +7,7 @@ export async function paymentsWorkbook(payments: any[], title = 'Cash report') {
   const XLSX = loadXlsx()
   const rows: Record<string, string | number>[] = payments.map((p) => ({
     ID: p.id,
-    Sana: localDateTimeString(p.createdAt),
+    Sana: p.createdAt.toISOString(),
     Bemor: p.patient.fullName,
     Telefon: p.patient.phone || '',
     Shifokor: p.doctor?.fullName || '',
@@ -34,7 +33,7 @@ export async function closureWorkbook(lines: Array<{ payment: any; label: string
   const XLSX = loadXlsx()
   const rows: Record<string, string | number>[] = lines.map(({ payment: p, label, method, amount }) => ({
     'To‘lov ID': p.id,
-    Sana: localDateTimeString(p.createdAt),
+    Sana: p.createdAt.toISOString(),
     Bemor: p.patient.fullName,
     Telefon: p.patient.phone || '',
     Xizmat: label,

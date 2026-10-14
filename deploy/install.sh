@@ -70,6 +70,13 @@ if [ "${SKIP_NGINX:-0}" != "1" ]; then
   fi
 fi
 
+echo "==> Avtomatik yangilanish (GitHub main o'zgarsa, har 5 daqiqada tekshiriladi)"
+if [ "${SKIP_AUTO_UPDATE:-0}" != "1" ]; then
+  APP_DIR="$(pwd)"
+  echo "*/5 * * * * root cd ${APP_DIR} && bash deploy/auto-update.sh >> /var/log/klinika-update.log 2>&1" > /etc/cron.d/klinika-auto-update
+  chmod 644 /etc/cron.d/klinika-auto-update
+fi
+
 IP="$(hostname -I | awk '{print $1}')"
 echo
 echo "================ TAYYOR ================"
@@ -79,4 +86,4 @@ if [ -n "$ADMIN_PASS" ]; then
   echo "Parol:   ${ADMIN_PASS}   (/root/klinika-admin.txt da saqlandi — kirgach almashtiring)"
 fi
 echo "Loglar:  docker compose logs -f app"
-echo "Yangilash: git pull && sudo docker compose up -d --build"
+echo "Yangilanish: GitHub main ga push qilinsa 5 daqiqa ichida o'zi yangilanadi (log: /var/log/klinika-update.log)"
